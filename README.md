@@ -85,9 +85,20 @@ library-app/
 
 ## ⚠️ Notes
 
-* This app **does not use login accounts**, but session-based tracking (e.g., last viewed, feedback).
-* Ensure `PDO` is enabled in your PHP configuration (`php.ini`)
-* Don't expose this app publicly with real data unless security measures are added.
+* LAGAY NIYO YUNG .ENV SA RECOMMENDER SERVICE FOLDER, upload ko sa drive
+
+## ⚠️ RUN NIYO SA TERMINAL NG VSCODE ONE BY ONE
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+python -m venv venv
+venv\Scripts\activate 
+pip install -r requirements.txt
+
+## ⚠️ PAG OKAY NA, ITO NAMAN
+
+cd recommender_service
+python app.py
+then Step 4
 
 ---
 
