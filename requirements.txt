@@ -2,3 +2,5 @@ flask
 pandas
 torch
 sentence-transformers
+openai
+python-dotenv
