@@ -33,7 +33,7 @@ $mail->isSMTP();
 $mail->Host = 'smtp.gmail.com';
 $mail->SMTPAuth = true;
 $mail->Username = 'hextech.abcy@gmail.com';
-$mail->Password = 'brgm uejx knoj upsi'; // Make sure this is your actual app password
+$mail->Password = 'PASTE HERE'; // Make sure this is your actual app password
 $mail->SMTPSecure = 'tls';
 $mail->Port = 587;
 
