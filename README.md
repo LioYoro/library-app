@@ -100,6 +100,14 @@ library-app/
 - python app.py
 - then Step 4
 
+## ⚠️ IF YOU WILL OPEN FROM SCRATCH (If installation is done)
+
+- Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+- venv\Scripts\activate
+- cd recommender_service
+- python app.py
+- then Step 4
+
 ---
 
 by [LioYoro](https://github.com/LioYoro)
