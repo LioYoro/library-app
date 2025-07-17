@@ -1,5 +1,3 @@
-Here's a version tailored for your `library-app` project, with steps to import the database and set up everything locally:
-
 ---
 
 # 📚 Library App
@@ -109,6 +107,63 @@ library-app/
 - then Step 4
 
 ---
+
+Here’s a **super baby-step Git guide** for your groupmates to update the project **using Git**, assuming they already cloned the repository before:
+
+---
+
+### 🍼 **IF THEY ALREADY CLONED THE PROJECT BEFORE (Git installed)**
+
+#### ✅ 1. **Open Git Bash / Terminal**
+
+* Go to the folder of the project (`ark-library`)
+* Right-click inside the folder > “Git Bash Here”
+  *(Or open Terminal and `cd` into the project folder)*
+
+---
+
+#### ✅ 2. **Check for changes first (optional)**
+
+```bash
+git status
+```
+
+> 🔎 This will show any files they changed locally that might be overwritten.
+
+---
+
+#### ✅ 3. **Pull the latest update from GitHub**
+
+```bash
+git pull origin main
+```
+
+> ✅ This downloads the latest version of the project from your GitHub and replaces old files.
+
+---
+
+#### ✅ 4. **Done! They do NOT need to reinstall requirements**
+
+* The `venv/` folder or `requirements.txt` didn’t change, so **no need to run `pip install` again**.
+* They can now test the new version normally in their localhost.
+
+---
+
+### 🛠 Optional: If they didn’t clone before
+
+If they **never cloned the GitHub repo**, here’s what they do instead:
+
+#### 🔹 1. **Open Git Bash or Terminal**
+
+```bash
+cd htdocs
+git clone https://github.com/your-username/ark-library.git
+```
+
+Replace with your actual repo link.
+
+---
+
 
 by [LioYoro](https://github.com/LioYoro)
 
