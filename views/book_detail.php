@@ -1,56 +1,59 @@
 <?php
 session_start();
-$sessionId = session_id();
+$userId = $_SESSION['user_id'] ?? null;
 
-// DB connection
+if (!$userId) {
+    die("You must be logged in to like or dislike.");
+}
+
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Handle vote submission
+// Handle vote
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['book_title'])) {
     $action = $_POST['action']; // 'like' or 'dislike'
     $title = $_POST['book_title'];
 
-    // Check for existing feedback
-    $stmt = $pdo->prepare("SELECT feedback FROM book_feedback WHERE session_id = ? AND book_title = ?");
-    $stmt->execute([$sessionId, $title]);
+    // Check if user already voted
+    $stmt = $pdo->prepare("SELECT feedback FROM book_feedback WHERE user_id = ? AND book_title = ?");
+    $stmt->execute([$userId, $title]);
     $existing = $stmt->fetchColumn();
 
     if ($existing === $action) {
-        // Same vote → remove
-        $pdo->prepare("DELETE FROM book_feedback WHERE session_id = ? AND book_title = ?")
-            ->execute([$sessionId, $title]);
+        // Remove vote
+        $pdo->prepare("DELETE FROM book_feedback WHERE user_id = ? AND book_title = ?")
+            ->execute([$userId, $title]);
 
         $col = $action === 'like' ? 'Like' : 'Dislike';
-        $pdo->prepare("UPDATE books SET `$col` = `$col` - 1 WHERE TITLE = :title")
-            ->execute(['title' => $title]);
+        $pdo->prepare("UPDATE books SET `$col` = `$col` - 1 WHERE TITLE = ?")
+            ->execute([$title]);
 
     } elseif ($existing) {
-        // Switch vote
-        $pdo->prepare("UPDATE book_feedback SET feedback = ? WHERE session_id = ? AND book_title = ?")
-            ->execute([$action, $sessionId, $title]);
+        // Change vote
+        $pdo->prepare("UPDATE book_feedback SET feedback = ? WHERE user_id = ? AND book_title = ?")
+            ->execute([$action, $userId, $title]);
 
         $fromCol = $existing === 'like' ? 'Like' : 'Dislike';
-        $toCol   = $action === 'like' ? 'Like' : 'Dislike';
+        $toCol = $action === 'like' ? 'Like' : 'Dislike';
 
-        $sql = "UPDATE books SET `$fromCol` = `$fromCol` - 1, `$toCol` = `$toCol` + 1 WHERE TITLE = :title";
-        $pdo->prepare($sql)->execute(['title' => $title]);
+        $pdo->prepare("UPDATE books SET `$fromCol` = `$fromCol` - 1, `$toCol` = `$toCol` + 1 WHERE TITLE = ?")
+            ->execute([$title]);
 
     } else {
         // New vote
-        $pdo->prepare("INSERT INTO book_feedback (session_id, book_title, feedback) VALUES (?, ?, ?)")
-            ->execute([$sessionId, $title, $action]);
+        $pdo->prepare("INSERT INTO book_feedback (user_id, book_title, feedback) VALUES (?, ?, ?)")
+            ->execute([$userId, $title, $action]);
 
         $col = $action === 'like' ? 'Like' : 'Dislike';
-        $pdo->prepare("UPDATE books SET `$col` = `$col` + 1 WHERE TITLE = :title")
-            ->execute(['title' => $title]);
+        $pdo->prepare("UPDATE books SET `$col` = `$col` + 1 WHERE TITLE = ?")
+            ->execute([$title]);
     }
 
     header("Location: book_detail.php?title=" . urlencode($title));
     exit;
 }
 
-// Fetch book data
+// Fetch book info
 $title = $_GET['title'] ?? '';
 $stmt = $pdo->prepare("SELECT * FROM books WHERE TITLE = ?");
 $stmt->execute([$title]);
@@ -60,9 +63,9 @@ if ($book) {
     $_SESSION['last_viewed_title'] = $book['TITLE'];
 }
 
-// Get user vote
-$voteStmt = $pdo->prepare("SELECT feedback FROM book_feedback WHERE session_id = ? AND book_title = ?");
-$voteStmt->execute([$sessionId, $title]);
+// Get user's vote
+$voteStmt = $pdo->prepare("SELECT feedback FROM book_feedback WHERE user_id = ? AND book_title = ?");
+$voteStmt->execute([$userId, $title]);
 $userVote = $voteStmt->fetchColumn();
 
 require __DIR__ . '/header.php';
@@ -87,8 +90,8 @@ require __DIR__ . '/header.php';
       <p class="text-sm leading-relaxed whitespace-pre-line"><?= nl2br(htmlspecialchars($book['SUMMARY'])) ?></p>
     </div>
 
-    <!-- Like / Dislike buttons -->
-    <div class="flex gap-4">
+    <!-- Like / Dislike -->
+    <div class="flex gap-4 mb-6">
       <form method="post">
         <input type="hidden" name="action" value="like">
         <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
@@ -106,9 +109,7 @@ require __DIR__ . '/header.php';
       </form>
     </div>
 
-    <hr class="my-8">
-
-    <!-- 📌 Because you viewed [book] -->
+    <!-- 📌 Related Books -->
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">📌 Because you viewed <em><?= htmlspecialchars($book['TITLE']) ?></em></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -125,7 +126,7 @@ require __DIR__ . '/header.php';
       </div>
     </section>
 
-    <!-- 🔥 Trending in Same Category -->
+    <!-- 🔥 Trending Books -->
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">🔥 Trending in <?= htmlspecialchars($book['General_Category']) ?></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -142,7 +143,7 @@ require __DIR__ . '/header.php';
       </div>
     </section>
 
-    <!-- ✍️ Other Works by Author -->
+    <!-- ✍️ Other Books by Author -->
     <section class="mb-6">
       <h2 class="text-lg font-semibold mb-2">✍️ Other Works by <?= htmlspecialchars($book['AUTHOR']) ?></h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

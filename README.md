@@ -24,7 +24,7 @@ A student-friendly library system with book viewing, recommendations, likes/disl
 
 ## 🔧 Installation Guide (Local / XAMPP)
 
-### 1. 📦 Clone the Repository
+### 1. 📦 Clone the Repository / CODE - DOWNLOAD ZIP
 
 ```bash
 git clone https://github.com/LioYoro/library-app.git

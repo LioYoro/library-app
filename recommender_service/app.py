@@ -140,7 +140,7 @@ def api_recommend_post():
 # ── 4.  Root → redirect to PHP UI ───────────────────────────────
 @app.route("/")
 def home():
-    return redirect("http://127.0.0.1/project/www/intuitive_recommender.php", code=302)
+    return redirect("http://127.0.0.1/library-app/index.php", code=302)
 
 # ── 5.  Run server ──────────────────────────────────────────────
 if __name__ == "__main__":

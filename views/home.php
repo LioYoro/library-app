@@ -139,6 +139,40 @@ if ($lastViewedTitle) {
 
     <!-- Sidebar -->
     <aside class="w-full md:w-1/3 flex flex-col gap-4 text-sm">
+
+    <?php if (isset($_SESSION['user_id'])): 
+  $userId = $_SESSION['user_id'];
+  $likedStmt = $pdo->prepare("
+    SELECT b.* FROM book_feedback bf
+JOIN books b ON b.TITLE = bf.book_title
+WHERE bf.user_id = ? AND bf.feedback = 'like'
+ORDER BY bf.id DESC LIMIT 4
+
+  ");
+  $likedStmt->execute([$userId]);
+  $likedBooks = $likedStmt->fetchAll();
+  if ($likedBooks): ?>
+  
+  <!-- ✅ Your Likes Section -->
+  <section class="border border-black rounded-lg max-h-[240px] overflow-y-auto scrollbar-thin p-3">
+    <h3 class="font-semibold text-base mb-2">👍 Your Likes</h3>
+    <?php foreach ($likedBooks as $b): ?>
+      <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-blue-50 transition rounded px-2 py-1">
+        <div class="flex gap-2 items-center">
+          <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="w-10 h-14 object-cover border" alt="Book cover">
+          <div>
+            <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
+            <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+            <div class="text-gray-400 text-sm">Likes: <?= $b['Like'] ?></div>
+          </div>
+        </div>
+      </a>
+    <?php endforeach; ?>
+  </section>
+
+<?php endif; endif; ?>
+
+
       <!-- Top Reviewed -->
       <section class="border border-black rounded-lg max-h-[240px] overflow-y-auto scrollbar-thin p-3">
         <h3 class="font-semibold text-base mb-2">Top Reviewed Books</h3>
