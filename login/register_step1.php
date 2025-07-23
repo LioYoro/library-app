@@ -79,7 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <option value="">Pumili ng Relihiyon</option>
             <option value="Catholic">Katoliko</option>
             <option value="Christian">Kristiyano</option>
+            <option value="Islam">Iglesia ni Cristo (INC)</option>
             <option value="Islam">Islam</option>
+            <option value="Islam">Protestant</option>
             <option value="Others">Iba pa</option>
         </select>
 

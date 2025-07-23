@@ -38,7 +38,7 @@ $_SESSION['registration']['religion'] = $_POST['religion'];
         Senior High School ka ba?
       </label>
 
-      <label for="course">Kurso:</label>
+      <label for="course">Kurso sa Kolehiyo:</label>
       <input type="text" name="course" id="course" required>
 
       <label for="school_name">Pangalan ng Paaralan:</label>

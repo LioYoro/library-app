@@ -2,6 +2,22 @@
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  if (isset($_POST['advanced'])) {
+    // Save the query temporarily and redirect via POST using a form
+    $_SESSION['advanced_query'] = $_POST['search_query'] ?? '';
+    echo '<form id="redirectForm" action="ask.php" method="post">';
+    echo '<input type="hidden" name="question" value="' . htmlspecialchars($_SESSION['advanced_query']) . '">';
+    echo '</form>';
+    echo '<script>document.getElementById("redirectForm").submit();</script>';
+    exit;
+  }
+
+  // Standard search logic can go here
+  $standardSearch = $_POST['search_query'] ?? '';
+  // Search filtering logic using $standardSearch
+}
+
 // Recommendation logic
 $lastViewedTitle = $_SESSION['last_viewed_title'] ?? null;
 $viewedBook = null;
