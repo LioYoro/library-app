@@ -1,35 +1,72 @@
-<h2 class="text-sm font-medium mb-2"><?= count($books) ?> Book(s) Found</h2>
+<?php
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/header.php';
 
-<?php if ($search || $category): ?>
-  <div class="mb-3">
-    <a href="index.php" class="text-blue-600 hover:underline">← Back to Home</a>
-  </div>
-<?php endif; ?>
+$search = $_GET['search'] ?? '';
+$category = $_GET['category'] ?? '';
 
-<?php if (count($books) === 0): ?>
-  <p class="text-red-600 font-medium">No results found.</p>
-<?php else: ?>
-  <div class="results grid gap-4">
-    <?php foreach ($books as $book): 
-      $data = $book['data'];
-    ?>
-      <div class="card flex items-start gap-3 p-3 border rounded-md bg-white shadow-sm">
-        <div class="thumbnail text-2xl">📘</div>
-        <div class="info flex-1">
-          <a href="book.php?id=<?= $book['index'] ?>" class="font-semibold text-blue-700 hover:underline">
-            <?= htmlspecialchars($data[1]) ?>
-          </a>
-          <div class="meta text-sm text-gray-600 mt-1">
-            <?= htmlspecialchars($data[8]) ?> | <?= htmlspecialchars($data[9]) ?>
+// Build search query
+$where = [];
+$params = [];
+
+if (!empty($search)) {
+    $where[] = "(TITLE LIKE :search OR SUMMARY LIKE :search)";
+    $params['search'] = "%$search%";
+}
+if (!empty($category)) {
+    $where[] = "General_Category = :category";
+    $params['category'] = $category;
+}
+
+$sql = "SELECT * FROM books";
+if ($where) {
+    $sql .= " WHERE " . implode(" AND ", $where);
+}
+$sql .= " ORDER BY `Like` DESC";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
+$books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<div class="container mx-auto px-4 py-6">
+  <h2 class="text-lg font-semibold mb-4"><?= count($books) ?> Book(s) Found</h2>
+
+  <?php if ($search || $category): ?>
+    <div class="mb-3">
+      <a href="../index.php" class="text-blue-600 hover:underline">← Back to Home</a>
+    </div>
+  <?php endif; ?>
+
+  <?php if (count($books) === 0): ?>
+    <p class="text-red-600 font-medium">No results found.</p>
+  <?php else: ?>
+    <div class="results grid gap-4">
+      <?php foreach ($books as $book): ?>
+        <a href="book_detail.php?title=<?= urlencode($book['TITLE']) ?>" class="card flex gap-4 p-4 border rounded-md bg-white shadow hover:shadow-md transition">
+          <div class="thumbnail text-4xl">
+            📘
           </div>
-          <div class="summary text-sm mt-1">
-            <?= htmlspecialchars($data[6]) ?>
+          <div class="info flex-1">
+            <div class="meta text-lg font-semibold text-blue-700 mb-1">
+              <?= htmlspecialchars($book['TITLE']) ?>
+            </div>
+            <div class="text-sm text-gray-600 mb-1">
+              👤 <?= htmlspecialchars($book['AUTHOR'] ?? 'Unknown') ?><br>
+              🔖 <?= htmlspecialchars($book['CALL NUMBER'] ?? 'N/A') ?><br>
+              🏷 <?= htmlspecialchars($book['General_Category'] ?? 'Uncategorized') ?>
+            </div>
+            <div class="summary text-sm mt-2">
+              <?= nl2br(htmlspecialchars($book['SUMMARY'] ?? 'No summary available.')) ?>
+            </div>
+            <div class="likes text-sm text-gray-700 mt-2">
+              👍 <?= $book['Like'] ?? 0 ?> &nbsp; | &nbsp; 👎 <?= $book['Dislike'] ?? 0 ?>
+            </div>
           </div>
-          <div class="likes text-sm text-gray-700 mt-2">
-            👍 <?= $data[10] ?> &nbsp; | &nbsp; 👎 <?= $data[11] ?>
-          </div>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  </div>
-<?php endif; ?>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+<?php require_once __DIR__ . '/footer.php'; ?>

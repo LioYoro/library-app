@@ -39,12 +39,34 @@ $_SESSION['registration']['school_name'] = $_POST['school_name'];
         <select name="barangay" id="barangay">
           <option value="">--Pumili--</option>
           <option value="Addition Hills">Addition Hills</option>
-          <option value="Barangka">Barangka</option>
+          <option value="Bagong Silang">Bagong Silang</option>
+          <option value="Barangka Drive">Barangka Drive</option>
+          <option value="Barangka Ibaba">Barangka Ibaba</option>
+          <option value="Barangka Ilaya">Barangka Ilaya</option>
+          <option value="Barangka Itaas">Barangka Itaas</option>
           <option value="Buayang Bato">Buayang Bato</option>
-          <option value="Hagdan Bato Itaas">Hagdan Bato Itaas</option>
+          <option value="Burol">Burol</option>
+          <option value="Daang Bakal">Daang Bakal</option>
+          <option value="Hagdang Bato Itaas">Hagdang Bato Itaas</option>
+          <option value="Hagdang Bato Libis">Hagdang Bato Libis</option>
+          <option value="Harapin ang Bukas">Harapin ang Bukas</option>
+          <option value="Highway Hills">Highway Hills</option>
           <option value="Hulo">Hulo</option>
-          <!-- Add other barangays here -->
+          <option value="Mabini-J. Rizal">Mabini-J. Rizal</option>
+          <option value="Malamig">Malamig</option>
+          <option value="Mauway">Mauway</option>
+          <option value="Namayan">Namayan</option>
+          <option value="New Zaniga">New Zaniga</option>
+          <option value="Old Zaniga">Old Zaniga</option>
+          <option value="Pag-asa">Pag-asa</option>
+          <option value="Plainview">Plainview</option>
+          <option value="Pleasant Hills">Pleasant Hills</option>
+          <option value="Poblacion">Poblacion</option>
+          <option value="San Jose">San Jose</option>
+          <option value="Vergara">Vergara</option>
+          <option value="Wack-Wack-Greenhills East">Wack-Wack-Greenhills East</option>
         </select>
+
       </div>
 
       <div id="city_section" style="display:none;">

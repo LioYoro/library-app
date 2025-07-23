@@ -1,6 +1,10 @@
 <?php
-require __DIR__ . '/../includes/db.php'; // Adjust path as needed
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+require __DIR__ . '/../includes/db.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

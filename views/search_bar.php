@@ -1,44 +1,79 @@
-<!-- Top Controls with Search -->
-<div class="flex flex-wrap gap-2 items-center mb-4">
-  <a href="ask.php" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none block">
-  ADVANCE SEARCH
-</a>
-
-
+<form id="searchForm" method="get" class="flex flex-wrap gap-2 items-center mb-4 w-full">
+  <!-- Search Bar -->
   <div class="flex items-center border border-black rounded-md flex-grow max-w-full">
-    <form method="get" class="flex items-center w-full">
-      <button type="button" class="px-2 text-lg text-black">
-        <i class="fas fa-filter"></i>
-      </button>
-      <input 
-        type="text" 
-        name="search" 
-        placeholder="Search by title or summary..." 
-        value="<?= htmlspecialchars($search) ?>" 
-        class="flex-grow px-2 py-1 text-sm outline-none" 
-      />
-      <select 
-        name="category" 
-        class="text-sm border-l px-1 py-1 border-black" 
-        onchange="this.form.submit()"
-      >
-        <option value="">All Categories</option>
-        <?php foreach ($categories as $cat): ?>
-          <option value="<?= htmlspecialchars($cat) ?>" <?= $cat === $category ? 'selected' : '' ?>>
-            <?= htmlspecialchars($cat) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-      <button type="submit" class="px-3 text-lg text-black">
-        <i class="fas fa-search"></i>
-      </button>
-    </form>
+    <button type="button" class="px-2 text-lg text-black">
+      <i class="fas fa-filter"></i>
+    </button>
+    <input 
+      type="text" 
+      name="search" 
+      placeholder="Search by title or summary..." 
+      value="<?= htmlspecialchars($_GET['search'] ?? '') ?>" 
+      class="flex-grow px-2 py-1 text-sm outline-none" 
+    />
+    <button id="standardSearchBtn" type="submit" class="px-3 text-lg text-black">
+      <i class="fas fa-search"></i>
+    </button>
   </div>
 
-  <button aria-label="Ask" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none flex items-center gap-1" type="button">
+  <!-- ASK (still static) -->
+  <button type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none flex items-center gap-1">
     ASK <span class="text-xs -mb-1">✦</span>
   </button>
-  <button class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none" type="button">
+
+  <!-- ADVANCED SEARCH (handled via JS) -->
+  <button id="advancedSearchBtn" type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none">
+    ADVANCED SEARCH
+  </button>
+
+  <!-- RECENT/FAVORITE -->
+  <button type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none">
     RECENT/FAVORITE
   </button>
-</div>
+</form>
+
+<script>
+  const form = document.getElementById('searchForm');
+  const input = form.querySelector("input[name='search']");
+  const standardBtn = document.getElementById('standardSearchBtn');
+  const advancedBtn = document.getElementById('advancedSearchBtn');
+
+  // Standard search: submit to book_results.php
+  standardBtn.addEventListener('click', function () {
+    const value = input.value.trim();
+    if (value) {
+      form.action = "views/book_results.php";
+      form.method = "get";
+      form.submit();
+    }
+  });
+
+  // Advanced search: submit to ask.php
+  advancedBtn.addEventListener('click', function () {
+    const value = input.value.trim();
+    if (value) {
+      form.action = "ask.php";
+      form.method = "post";
+
+      // Convert the input into a POST field
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "question";
+      hidden.value = value;
+      form.appendChild(hidden);
+
+      form.submit();
+    }
+  });
+
+  // Handle Enter key manually to use standard search
+  form.addEventListener("submit", function (e) {
+    const value = input.value.trim();
+    if (!value) {
+      e.preventDefault(); // prevent if empty
+    } else {
+      form.action = "views/book_results.php";
+      form.method = "get";
+    }
+  });
+</script>
