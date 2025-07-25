@@ -85,126 +85,203 @@ if ($lastViewedTitle) {
     <!-- Recommendations -->
     <aside class="w-full md:w-2/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
 
-      <?php if ($viewedBook): ?>
+  <?php
+  function getCommentCount($pdo, $title) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM comments WHERE book_title = ?");
+    $stmt->execute([$title]);
+    return (int)$stmt->fetchColumn();
+  }
+  ?>
 
-        <!-- 📌 Because you viewed -->
-        <div>
-          <h2 class="text-base font-bold mb-2">📌 Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <?php foreach ($recommendations as $b): ?>
-              <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
-                 class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-blue-400 hover:bg-blue-50 transition cursor-pointer space-y-1">
-                <div class="font-semibold"><?= htmlspecialchars($b['TITLE']) ?></div>
-                <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
-              </a>
-            <?php endforeach; ?>
-          </div>
-        </div>
+  <?php if ($viewedBook): ?>
 
-        <!-- 🔥 Trending in [Category] -->
-        <div>
-          <h2 class="text-base font-bold mb-2">🔥 Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <?php foreach ($trending as $t): ?>
-              <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>"
-                 class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-yellow-400 hover:bg-yellow-50 transition cursor-pointer space-y-1">
-                <div class="font-semibold"><?= htmlspecialchars($t['TITLE']) ?></div>
-                <div>👍 <?= $t['Like'] ?? 0 ?> likes</div>
-                <?php if (!empty($t['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
-              </a>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <!-- ✍️ Other Works by Author -->
-        <?php if (!empty($otherWorks)): ?>
-        <div>
-          <h2 class="text-base font-bold mb-2">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <?php foreach ($otherWorks as $w): ?>
-              <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>"
-                 class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-purple-400 hover:bg-purple-50 transition cursor-pointer space-y-1">
-                <div class="font-semibold"><?= htmlspecialchars($w['TITLE']) ?></div>
-                <?php if (!empty($w['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
-              </a>
-            <?php endforeach; ?>
-          </div>
-        </div>
-        <?php endif; ?>
-
-      <?php endif; ?>
-
-      <!-- 🔥 Top Trending Books (Always shown) -->
-      <div>
-        <h2 class="text-lg font-semibold mb-3">🔥 Top Trending Books</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <?php
-          $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
-          foreach ($stmt as $b): ?>
-            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
-               class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-orange-400 hover:bg-orange-50 transition cursor-pointer space-y-1 text-center">
-              <div class="font-semibold text-sm"><?= htmlspecialchars($b['TITLE']) ?></div>
-              <?php if (!empty($b['AUTHOR'])): ?><div class="text-xs text-gray-600">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-              <div class="text-xs text-gray-500">👍 <?= $b['Like'] ?? 0 ?> Likes</div>
-            </a>
-          <?php endforeach; ?>
-        </div>
+    <!-- 📌 Because you viewed -->
+    <div>
+      <h2 class="text-base font-bold mb-2">📌 Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <?php foreach ($recommendations as $b): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
+             class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-blue-400 hover:bg-blue-50 transition cursor-pointer space-y-1">
+            <div class="font-semibold"><?= htmlspecialchars($b['TITLE']) ?></div>
+            <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+            <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
+            <div class="text-xs text-gray-600">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+          </a>
+        <?php endforeach; ?>
       </div>
-    </aside>
+    </div>
+
+    <!-- 🔥 Trending in [Category] -->
+    <div>
+      <h2 class="text-base font-bold mb-2">🔥 Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <?php foreach ($trending as $t): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>"
+             class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-yellow-400 hover:bg-yellow-50 transition cursor-pointer space-y-1">
+            <div class="font-semibold"><?= htmlspecialchars($t['TITLE']) ?></div>
+            <?php if (!empty($t['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
+            <div class="text-xs text-gray-600">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <!-- ✍️ Other Works by Author -->
+    <?php if (!empty($otherWorks)): ?>
+    <div>
+      <h2 class="text-base font-bold mb-2">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <?php foreach ($otherWorks as $w): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>"
+             class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-purple-400 hover:bg-purple-50 transition cursor-pointer space-y-1">
+            <div class="font-semibold"><?= htmlspecialchars($w['TITLE']) ?></div>
+            <?php if (!empty($w['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
+            <div class="text-xs text-gray-600">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
+  <?php endif; ?>
+
+  <!-- 🔥 Top Trending Books (Always shown) -->
+  <div>
+    <h2 class="text-lg font-semibold mb-3">🔥 Top Trending Books</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <?php
+      $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
+      foreach ($stmt as $b): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
+           class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-orange-400 hover:bg-orange-50 transition cursor-pointer space-y-1 text-center">
+          <div class="font-semibold text-sm"><?= htmlspecialchars($b['TITLE']) ?></div>
+          <?php if (!empty($b['AUTHOR'])): ?><div class="text-xs text-gray-600">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+          <div class="text-xs text-gray-500">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</aside>
+
 
     <!-- Sidebar -->
     <aside class="w-full md:w-1/3 flex flex-col gap-4 text-sm">
 
-    <?php if (isset($_SESSION['user_id'])): 
+    <?php
+if (isset($_SESSION['user_id'])):
   $userId = $_SESSION['user_id'];
+  $likesPerPage = 5;
+  $likePage = max((int)($_GET['like_page'] ?? 1), 1);
+  $offset = ($likePage - 1) * $likesPerPage;
+
+  // Fetch paginated liked books
   $likedStmt = $pdo->prepare("
     SELECT b.* FROM book_feedback bf
-JOIN books b ON b.TITLE = bf.book_title
-WHERE bf.user_id = ? AND bf.feedback = 'like'
-ORDER BY bf.id DESC LIMIT 4
-
+    JOIN books b ON b.TITLE = bf.book_title
+    WHERE bf.user_id = ? AND bf.feedback = 'like'
+    ORDER BY bf.id DESC
+    LIMIT $likesPerPage OFFSET $offset
   ");
   $likedStmt->execute([$userId]);
   $likedBooks = $likedStmt->fetchAll();
-  if ($likedBooks): ?>
-  
+
+  // Get total count for pagination
+  $countStmt = $pdo->prepare("SELECT COUNT(*) FROM book_feedback WHERE user_id = ? AND feedback = 'like'");
+  $countStmt->execute([$userId]);
+  $totalLikes = (int)$countStmt->fetchColumn();
+  $totalLikePages = max(1, ceil($totalLikes / $likesPerPage));
+?>
+
   <!-- ✅ Your Likes Section -->
-  <section class="border border-black rounded-lg max-h-[240px] overflow-y-auto scrollbar-thin p-3">
+  <section class="border border-black rounded-lg max-h-[300px] overflow-y-auto scrollbar-thin p-3">
     <h3 class="font-semibold text-base mb-2">👍 Your Likes</h3>
-    <?php foreach ($likedBooks as $b): ?>
-      <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-blue-50 transition rounded px-2 py-1">
+    
+    <?php if (empty($likedBooks)): ?>
+      <p class="text-sm text-gray-600">You haven't liked any books yet.</p>
+    <?php else: ?>
+      <?php foreach ($likedBooks as $b): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-blue-50 transition rounded px-2 py-1">
+          <div class="flex gap-2 items-center">
+            <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="w-10 h-14 object-cover border" alt="Book cover">
+            <div>
+              <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
+              <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+              <div class="text-gray-400 text-sm">Likes: <?= $b['Like'] ?></div>
+            </div>
+          </div>
+        </a>
+      <?php endforeach; ?>
+
+      <!-- 🔢 Pagination Links -->
+      <div class="mt-2 flex gap-1 flex-wrap justify-center text-xs">
+        <?php for ($i = 1; $i <= $totalLikePages; $i++): ?>
+          <a href="?like_page=<?= $i ?>"
+            class="px-2 py-1 rounded <?= $i === $likePage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300' ?>">
+            <?= $i ?>
+          </a>
+        <?php endfor; ?>
+      </div>
+    <?php endif; ?>
+  </section>
+
+<?php endif; ?>
+
+
+
+      <?php
+$commentedPage = max((int)($_GET['commented_page'] ?? 1), 1);
+$commentsPerPage = 5;
+$commentOffset = ($commentedPage - 1) * $commentsPerPage;
+
+// Fetch most commented books (paginated)
+$commentedStmt = $pdo->prepare("
+  SELECT b.*, COUNT(c.id) as comment_count
+  FROM comments c
+  JOIN books b ON b.TITLE = c.book_title
+  GROUP BY c.book_title
+  ORDER BY comment_count DESC
+  LIMIT $commentsPerPage OFFSET $commentOffset
+");
+$commentedStmt->execute();
+$topCommented = $commentedStmt->fetchAll();
+
+// Get total for pagination
+$totalCommentsStmt = $pdo->query("SELECT COUNT(DISTINCT book_title) FROM comments");
+$totalCommentedBooks = (int)$totalCommentsStmt->fetchColumn();
+$totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
+?>
+
+<!-- 💬 Top Commented Books -->
+<section class="border border-black rounded-lg max-h-[300px] overflow-y-auto scrollbar-thin p-3">
+  <h3 class="font-semibold text-base mb-2">💬 Top Commented Books</h3>
+  <?php if (empty($topCommented)): ?>
+    <p class="text-sm text-gray-600">No books have comments yet.</p>
+  <?php else: ?>
+    <?php foreach ($topCommented as $b): ?>
+      <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-gray-50 transition rounded px-2 py-1">
         <div class="flex gap-2 items-center">
           <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="w-10 h-14 object-cover border" alt="Book cover">
           <div>
             <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
             <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-            <div class="text-gray-400 text-sm">Likes: <?= $b['Like'] ?></div>
+            <div class="text-gray-400 text-sm">💬 <?= $b['comment_count'] ?> comment<?= $b['comment_count'] == 1 ? '' : 's' ?></div>
           </div>
         </div>
       </a>
     <?php endforeach; ?>
-  </section>
 
-<?php endif; endif; ?>
+    <!-- 🔢 Pagination -->
+    <div class="mt-2 flex gap-1 flex-wrap justify-center text-xs">
+      <?php for ($i = 1; $i <= $totalCommentedPages; $i++): ?>
+        <a href="?commented_page=<?= $i ?>"
+           class="px-2 py-1 rounded <?= $i === $commentedPage ? 'bg-purple-600 text-white' : 'bg-gray-200 hover:bg-gray-300' ?>">
+          <?= $i ?>
+        </a>
+      <?php endfor; ?>
+    </div>
+  <?php endif; ?>
+</section>
 
-
-      <!-- Top Reviewed -->
-      <section class="border border-black rounded-lg max-h-[240px] overflow-y-auto scrollbar-thin p-3">
-        <h3 class="font-semibold text-base mb-2">Top Reviewed Books</h3>
-        <?php
-        $topBooks = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 4");
-        foreach ($topBooks as $b): ?>
-          <div class="flex gap-2 mb-3">
-            <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="w-10 h-14 object-cover border" alt="Book cover">
-            <div>
-              <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
-              <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-              <div class="text-gray-400">Likes: <?= $b['Like'] ?></div>
-            </div>
-          </div>
-        <?php endforeach; ?>
-      </section>
 
       <!-- External Resources -->
       <section class="border border-black rounded-lg px-3 py-2">

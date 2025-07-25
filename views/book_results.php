@@ -24,9 +24,16 @@ if ($where) {
 }
 $sql .= " ORDER BY `Like` DESC";
 
-$stmt = $conn->prepare($sql);aw 
+$stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch comment counts per book title
+$commentCounts = [];
+$commentStmt = $conn->query("SELECT book_title, COUNT(*) as count FROM comments GROUP BY book_title");
+foreach ($commentStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    $commentCounts[$row['book_title']] = $row['count'];
+}
 ?>
 
 <div class="container mx-auto px-4 py-6">
@@ -60,7 +67,9 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
               <?= nl2br(htmlspecialchars($book['SUMMARY'] ?? 'No summary available.')) ?>
             </div>
             <div class="likes text-sm text-gray-700 mt-2">
-              👍 <?= $book['Like'] ?? 0 ?> &nbsp; | &nbsp; 👎 <?= $book['Dislike'] ?? 0 ?>
+              👍 <?= $book['Like'] ?? 0 ?> &nbsp; | 
+              👎 <?= $book['Dislike'] ?? 0 ?> &nbsp; | 
+              💬 <?= $commentCounts[$book['TITLE']] ?? 0 ?> comment<?= ($commentCounts[$book['TITLE']] ?? 0) == 1 ? '' : 's' ?>
             </div>
           </div>
         </a>

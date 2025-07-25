@@ -65,6 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <input type="text" name="first_name" placeholder="Pangalan" required>
         <input type="text" name="last_name" placeholder="Apelyido" required>
+        <label for="contact_number">Contact Number:</label>
+        <input type="text" name="contact_number" id="contact_number" required>
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" id="password" name="password" placeholder="Password" required>
         <input type="password" id="confirm_password" name="confirm_password" placeholder="Kumpirmahin ang Password" required>

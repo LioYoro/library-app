@@ -1,133 +1,105 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/views/header.php';
 
-// 📡 POST to Flask API
-function callApiPost(string $url, array $data): ?array {
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FAILONERROR    => false,
-        CURLOPT_PROXY          => '',
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_TIMEOUT        => 30,
-        CURLOPT_POST           => true,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS     => json_encode($data)
-    ]);
-    $body = curl_exec($ch);
-    if ($body === false) {
-        echo "<pre>cURL error [" . curl_errno($ch) . "]: " . curl_error($ch) . "</pre>";
+
+$answer = '';
+$mainBook = [];
+$relatedBooks = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['question'])) {
+    $question = trim($_POST['question']);
+    if (!empty($question)) {
+        $data = json_encode(['question' => $question]);
+
+        $ch = curl_init('http://127.0.0.1:5001/api/chat');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        $response = curl_exec($ch);
         curl_close($ch);
-        return null;
+
+        if ($response) {
+            $decoded = json_decode($response, true);
+            $answer = $decoded['answer'] ?? 'No answer.';
+            $mainBook = $decoded['main'] ?? [];
+            $relatedBooks = $decoded['related'] ?? [];
+        } else {
+            $answer = 'Error communicating with the AI.';
+        }
     }
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    if ($code !== 200) {
-        echo "<pre>API error $code:\n$body</pre>";
-        return null;
-    }
-    return json_decode($body, true);
 }
-
-// 🧠 Input Handling
-$question = $_POST['question'] ?? '';
-$result = null;
-$error = '';
-
-if (isset($_POST['clear_cache'])) {
-    unset($_SESSION['last_bot']);
-    header("Location: ask.php");
-    exit;
-}
-
-if ($question !== '') {
-    $result = callApiPost("http://127.0.0.1:5001/api/chat", [
-        "question" => $question
-    ]);
-    if ($result) {
-        $_SESSION['last_bot'] = [
-            'question' => $question,
-            'answer'   => $result
-        ];
-    } else {
-        $error = "No results found or API error.";
-    }
-} elseif (isset($_SESSION['last_bot'])) {
-    $question = $_SESSION['last_bot']['question'];
-    $result   = $_SESSION['last_bot']['answer'];
-}
-
-require __DIR__ . '/views/header.php';
 ?>
 
-<main class="max-w-4xl mx-auto py-10 px-4">
-  <h1 class="text-xl font-bold text-center mb-6">🤖 Ask the Library Bot</h1>
+<div class="max-w-4xl mx-auto py-6 px-4">
+  <h1 class="text-xl font-bold mb-4">🤖 Ask the Library Bot</h1>
 
-  <!-- Ask form -->
-  <form method="post" class="mb-4 flex flex-col gap-2">
-      <input name="question"
-             type="text"
-             placeholder="Ask something like 'Books about World War II'"
-             value="<?= htmlspecialchars($question) ?>"
-             class="border border-gray-300 rounded px-3 py-2 w-full text-sm" />
-      <button type="submit"
-              class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-          Ask
-      </button>
+  <form method="POST" onsubmit="showLoading()" class="flex flex-col sm:flex-row items-center gap-2 mb-4">
+    <input
+      type="text"
+      name="question"
+      required
+      placeholder="Ask about books, topics, summaries..."
+      value="<?= htmlspecialchars($_POST['question'] ?? '') ?>"
+      class="flex-grow px-4 py-2 border rounded shadow-sm w-full sm:w-auto"
+    />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Ask</button>
+    <button type="button" onclick="clearAnswer()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition">🗑 Clear Last Answer</button>
   </form>
 
-  <!-- Clear button -->
-  <form method="post" class="mb-6">
-      <input type="hidden" name="clear_cache" value="1">
-      <button class="text-red-600 underline text-sm">🗑 Clear Last Answer</button>
-  </form>
+  <div id="loading" class="text-blue-600 mb-4 hidden">
+    <i class="fas fa-spinner fa-spin mr-2"></i> Getting answer from the Library Bot...
+  </div>
 
-  <?php if ($error): ?>
-      <p class="text-red-600 font-semibold"><?= htmlspecialchars($error) ?></p>
-  <?php endif; ?>
+  <?php if (!empty($answer)): ?>
+    <div id="bot-answer" class="bg-gray-100 border border-gray-300 p-4 rounded mb-4">
+      <h2 class="text-lg font-semibold mb-2">🤖 Bot Answer:</h2>
+      <p class="text-gray-800 whitespace-pre-line"><?= nl2br(htmlspecialchars($answer)) ?></p>
+    </div>
 
-  <?php if ($result): ?>
-      <div class="space-y-6">
-
-  <!--Answer -->
-  <section>
-    <h2 class="text-lg font-semibold">📣 Answer</h2>
-    <p class="text-gray-800 whitespace-pre-wrap"><?= htmlspecialchars($result['answer']) ?></p>
-  </section>
-
-  <!-- Main Recommendation -->
-<section>
-  <h2 class="text-lg font-semibold">📌 Main Recommendation</h2>
-  <a href="views/book_detail.php?title=<?= urlencode($result['main']['title']) ?>"
-     class="block bg-blue-100 border border-blue-300 hover:border-blue-500 hover:shadow-md transition shadow-md rounded p-4">
-    <p class="text-xl font-bold"><?= htmlspecialchars($result['main']['title']) ?></p>
-    <p class="text-sm">👤 Author: <?= htmlspecialchars($result['main']['author']) ?></p>
-    <p class="text-sm">🔖 Call No: <?= htmlspecialchars($result['main']['call_no']) ?></p>
-    <p class="mt-2 text-gray-700 text-sm"><?= htmlspecialchars($result['main']['short_summary']) ?></p>
-  </a>
-</section>
-
-
-  <!-- Related Books -->
-  <?php if (!empty($result['related'])): ?>
-    <section>
-      <h2 class="text-lg font-semibold">📚 Related Books</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <?php foreach ($result['related'] as $r): ?>
-          <a href="views/book_detail.php?title=<?= urlencode($r['title']) ?>"
-             class="block bg-gray-100 border hover:border-blue-400 hover:shadow-md transition rounded p-4 text-sm text-gray-800">
-            <p class="font-semibold"><?= htmlspecialchars($r['title']) ?></p>
-            <p>👤 <?= htmlspecialchars($r['author']) ?></p>
-            <p>🔖 <?= htmlspecialchars($r['call_no']) ?></p>
-            <p class="mt-2 text-gray-700"><?= htmlspecialchars($r['short']) ?></p>
-          </a>
-        <?php endforeach; ?>
+    <?php if (!empty($mainBook)): ?>
+      <div class="mb-6 p-4 border border-blue-300 bg-blue-50 rounded">
+        <h3 class="font-semibold text-blue-700 mb-2">📘 Main Recommendation:</h3>
+        <a href="views/book_detail.php?title=<?= urlencode($mainBook['title']) ?>" class="block p-3 bg-white rounded border shadow hover:shadow-md transition">
+          <div class="text-lg font-semibold text-blue-800"><?= htmlspecialchars($mainBook['title']) ?></div>
+          <div class="text-sm text-gray-600 mt-1">
+            👤 <?= htmlspecialchars($mainBook['author']) ?><br>
+            🔖 <?= htmlspecialchars($mainBook['call_no']) ?><br>
+            📄 <?= htmlspecialchars($mainBook['short_summary']) ?>
+          </div>
+        </a>
       </div>
-    </section>
-  <?php endif; ?>
+    <?php endif; ?>
 
+    <?php if (!empty($relatedBooks)): ?>
+      <div class="mb-6 p-4 border border-green-300 bg-green-50 rounded">
+        <h3 class="font-semibold text-green-700 mb-3">📚 Related Books:</h3>
+        <div class="grid gap-4">
+          <?php foreach ($relatedBooks as $related): ?>
+            <a href="views/book_detail.php?title=<?= urlencode($related['title']) ?>" class="block p-3 bg-white rounded border shadow hover:shadow-md transition">
+              <div class="text-base font-semibold text-green-800"><?= htmlspecialchars($related['title']) ?></div>
+              <div class="text-sm text-gray-600 mt-1">
+                👤 <?= htmlspecialchars($related['author']) ?><br>
+                🔖 <?= htmlspecialchars($related['call_no']) ?><br>
+                📄 <?= htmlspecialchars($related['short']) ?>
+              </div>
+            </a>
+          <?php endforeach; ?>
+        </div>
       </div>
+    <?php endif; ?>
   <?php endif; ?>
-</main>
+</div>
 
-<?php require __DIR__ . '/views/footer.php'; ?>
+<script>
+  function showLoading() {
+    document.getElementById('loading').classList.remove('hidden');
+  }
+
+  function clearAnswer() {
+    window.location.href = 'ask.php';
+  }
+</script>
+
+<?php require_once __DIR__ . '/views/footer.php'; ?>
