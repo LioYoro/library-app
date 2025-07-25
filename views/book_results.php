@@ -24,7 +24,7 @@ if ($where) {
 }
 $sql .= " ORDER BY `Like` DESC";
 
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare($sql);aw 
 $stmt->execute($params);
 $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
