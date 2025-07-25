@@ -45,7 +45,6 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <?php foreach ($books as $book): ?>
         <a href="book_detail.php?title=<?= urlencode($book['TITLE']) ?>" class="card flex gap-4 p-4 border rounded-md bg-white shadow hover:shadow-md transition">
           <div class="thumbnail text-4xl">
-            📘
           </div>
           <div class="info flex-1">
             <div class="meta text-lg font-semibold text-blue-700 mb-1">
@@ -53,8 +52,8 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <div class="text-sm text-gray-600 mb-1">
               👤 <?= htmlspecialchars($book['AUTHOR'] ?? 'Unknown') ?><br>
-              🔖 <?= htmlspecialchars($book['CALL NUMBER'] ?? 'N/A') ?><br>
-              🏷 <?= htmlspecialchars($book['General_Category'] ?? 'Uncategorized') ?>
+               <?= htmlspecialchars($book['CALL NUMBER'] ?? 'N/A') ?><br>
+               <?= htmlspecialchars($book['General_Category'] ?? 'Uncategorized') ?>
             </div>
             <div class="summary text-sm mt-2">
               <?= nl2br(htmlspecialchars($book['SUMMARY'] ?? 'No summary available.')) ?>
