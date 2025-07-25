@@ -27,9 +27,9 @@
   </button>
 
   <!-- RECENT/FAVORITE -->
-  <button type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none">
-    RECENT/FAVORITE
-  </button>
+  <a href="views/favorites.php" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none flex items-center gap-1">
+  ❤️ BOOKMARKS
+</a>
 </form>
 
 <script>

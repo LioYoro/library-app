@@ -43,14 +43,40 @@ require __DIR__ . '/../includes/db.php';
   </nav>
 
   <?php if (isset($_SESSION['first_name'])): ?>
-    <div class="flex items-center gap-4 text-sm">
-      <span>Hello, <strong><?= htmlspecialchars($_SESSION['first_name']) ?>!</strong></span>
-      <form action="login/logout.php" method="post">
-        <button type="submit" class="border border-gray-300 rounded px-4 py-1 hover:bg-red-600 hover:text-white transition">
-          Logout
-        </button>
-      </form>
-    </div>
+    <?php
+// Get user's profile picture from database
+$userId = $_SESSION['user_id'] ?? null;
+$profilePic = null;
+
+if ($userId) {
+  $stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = ?");
+  $stmt->execute([$userId]);
+  $result = $stmt->fetch(PDO::FETCH_ASSOC);
+  if ($result && !empty($result['profile_picture'])) {
+    $profilePic = '/library-app/' . ltrim($result['profile_picture'], '/');
+  }
+}
+?>
+
+<div class="flex items-center gap-4 text-sm">
+  <a href="/library-app/profile/edit.php" class="flex items-center gap-2 border border-gray-300 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition">
+    <?php if ($profilePic): ?>
+      <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile" class="w-7 h-7 rounded-full object-cover border border-white">
+    <?php else: ?>
+      <div class="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-bold">?</div>
+    <?php endif; ?>
+    <span>Profile</span>
+  </a>
+
+  <span>Hello, <strong><?= htmlspecialchars($_SESSION['first_name']) ?>!</strong></span>
+
+  <form action="/library-app/login/logout.php" method="post">
+    <button type="submit" class="border border-gray-300 rounded px-4 py-1 hover:bg-red-600 hover:text-white transition">
+      Logout
+    </button>
+  </form>
+</div>
+
   <?php else: ?>
     <button
       class="border border-gray-300 rounded px-4 py-1 text-sm hover:bg-gray-400 hover:text-white transition"

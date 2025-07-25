@@ -46,10 +46,18 @@ from intuitive_bot import ask as bot_ask
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     data = request.get_json(force=True)
+    print("Received data:", data)  # Debug print
     question = (data or {}).get("question", "").strip()
     if not question:
         return jsonify({"error":"missing question"}), 400
-    res = bot_ask(question)
+    
+    try:
+        res = bot_ask(question)
+        print("Bot response:", res)  # Debug print
+    except Exception as e:
+        print("Error in bot_ask:", e)
+        return jsonify({"error": "Internal error"}), 500
+
     return jsonify(res)
 
 
@@ -86,16 +94,17 @@ def api_recommend():
     ser = lambda idx_list: [serialize_row(i, seed_vec) for i in idx_list]
 
     return jsonify({
-    "seed": {
-        "title"       : seed_row["TITLE"],
-        "author"      : _clean(seed_row.get("AUTHOR"), "Unknown"),
-        "general_cat" : seed_row["General_Category"],
-        "sub_cat"     : _clean(seed_row.get("Sub_Category"), "N/A")
-    },
-    "similar"  : ser(res["similar"]),
-    "trending" : ser(res["trending"]),
-    "author"   : ser(res["author"]),
-})
+        "seed": {
+            "title"       : seed_row["TITLE"],
+            "author"      : _clean(seed_row.get("AUTHOR"), "Unknown"),
+            "general_cat" : seed_row["General_Category"],
+            "sub_cat"     : _clean(seed_row.get("Sub_Category"), "N/A")
+        },
+        "similar"  : ser(res["similar"]),
+        "trending" : ser(res["trending"]),
+        "author"   : ser(res["author"]),
+    })
+
 
 @app.route("/api/recommend", methods=["POST"])
 def api_recommend_post():
@@ -131,7 +140,7 @@ def api_recommend_post():
             "title"   : row["TITLE"],
             "author"  : _clean(row.get("AUTHOR"), "Unknown"),
             "call_no" : _clean(row.get("CALL NUMBER"), "N/A"),
-            "short"   : short_sum(row.get("Summary", ""))
+            "short"   : short_sum(row.get("SUMMARY", ""))  # ✅ FIXED HERE
         })
 
     return jsonify({"recommended": related_books})
