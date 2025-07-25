@@ -1,0 +1,294 @@
+/* style.css */
+
+/* Reset some default browser styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  background-color: #004aad;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.navigation a,
+.navigation button {
+  color: white;
+  margin-left: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 16px;
+}
+
+.navigation button:hover,
+.navigation a:hover {
+  text-decoration: underline;
+}
+
+/* Popup wrapper */
+.wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Show popup */
+.wrapper.active {
+  display: flex;
+}
+
+/* Close icon */
+.icon-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+}
+
+/* Form boxes */
+.form-box {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 8px;
+  width: 350px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+/* Headings */
+.form-box h2 {
+  margin-bottom: 20px;
+  color: #004aad;
+  text-align: center;
+}
+
+/* Input boxes */
+.input-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-box input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.input-box input:focus {
+  border-color: #004aad;
+}
+
+.input-box label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #999;
+  pointer-events: none;
+  transition: 0.3s ease all;
+  font-size: 14px;
+}
+
+.input-box input:focus + label,
+.input-box input:not(:placeholder-shown) + label {
+  top: -8px;
+  left: 8px;
+  background-color: white;
+  padding: 0 4px;
+  font-size: 12px;
+  color: #004aad;
+}
+
+/* Icons inside input */
+.input-box .icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 18px;
+}
+
+/* Remember me and forgot password */
+.remember-forgot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.remember-forgot label input {
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.remember-forgot a {
+  color: #004aad;
+  text-decoration: none;
+}
+
+.remember-forgot a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 12px 0;
+  background-color: #004aad;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #003080;
+}
+
+/* Login/Register toggle text */
+.login-register {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #555;
+}
+
+.login-register a {
+  color: #004aad;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.login-register a:hover {
+  text-decoration: underline;
+}
+
+/* Main Content */
+.main {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+#searchSection,
+#bookNavigateSection {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  margin-top: 20px;
+}
+
+.search-bar input[type="text"] {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px 0 0 6px;
+  font-size: 16px;
+}
+
+.search-bar button {
+  padding: 12px 25px;
+  background-color: #004aad;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.search-bar button:hover {
+  background-color: #003080;
+}
+
+.book-results p {
+  margin-top: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Categories and Cards */
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.category-card {
+  background-color: #004aad;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+  font-weight: 600;
+}
+
+.category-card:hover {
+  background-color: #003080;
+}
+
+/* Shelf and Book Display */
+#shelf-selection h3,
+#book-display h3 {
+  margin-bottom: 15px;
+  color: #004aad;
+}
+
+#shelves,
+#book-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
