@@ -201,3 +201,43 @@ class Recommender:
                 f"| 📚 {row['General_Category']} | 🔗 {sim:4.1f}% similar"
             )
         return "\n".join(out)
+
+    MAJOR_CATEGORY_MAP = {
+        "AB Political Science": ["Politics", "History", "Social Science"],
+        "AB Psychology": ["Psychology", "Self-Help"],
+        "BA Broadcasting": ["Art & Media"],
+        "BA History": ["History"],
+        "BS Accountancy": ["Business & Career"],
+        "BS Architecture": ["Art & Media"],
+        "BS Civil Engineering": ["Science"],
+        "BS Computer Engineering": ["Science"],
+        "BS Dentistry": ["Health"],
+        "BS ECE": ["Science"],
+        # ... add all other majors
+    }
+
+    STRAND_CATEGORY_MAP = {
+        "ABM": ["Business & Career", "Economics"],
+        "STEM": ["Science", "Academic"],
+        "HUMSS": ["History", "Politics", "Social Science"],
+        "GAS": ["Non-Fiction", "Education"],
+        "TVL": ["Craft", "Culinary"],
+        "Arts and Design": ["Art & Media"]
+    }
+
+    def recommend_by_major_or_strand(self, education_level, field, top_n=5):
+        if education_level.lower() == "college":
+            categories = self.MAJOR_CATEGORY_MAP.get(field, [])
+        else:
+            categories = self.STRAND_CATEGORY_MAP.get(field, [])
+        
+        if not categories:
+            return []
+        # Filter the DataFrame based on the categories
+        filtered_books = self.df[self.df['General_Category'].str.contains('|'.join(categories), na=False)]
+        
+        # Get the top_n recommendations
+        recommendedBooks = filtered_books.nlargest(top_n, 'Like')[['TITLE', 'AUTHOR', 'General_Category', 'Sub_Category']]
+        
+        return recommendedBooks.to_dict(orient='records')
+

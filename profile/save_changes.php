@@ -8,28 +8,27 @@ if (!$userId) {
     exit("Not logged in.");
 }
 
-$submittedOtp = $_POST['otp'] ?? '';
-if (empty($submittedOtp)) {
-    exit("OTP required.");
-}
-
-// Validate OTP
+// Fetch user data first
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) exit("User not found.");
 
-if ($user['otp_code'] !== $submittedOtp || strtotime($user['otp_expires_at']) < time()) {
-    exit("Invalid or expired OTP.");
-}
+$education_level = $_POST['education_level'] ?? '';
 
-// Prepare updated fields
 $fields = [
     'first_name', 'last_name', 'contact_number', 'email', 'gender', 'age', 'religion',
-    'education_level', 'course', 'school_name',
-    'is_mandaluyong_resident', 'barangay', 'city_outside_mandaluyong'
+    'education_level', 'school_name',
+    'is_mandaluyong_resident', 'barangay', 'city_outside_mandaluyong',
 ];
+
+// Include the correct field based on education level
+if ($education_level === 'SHS') {
+    $fields[] = 'strand';
+} elseif ($education_level === 'College') {
+    $fields[] = 'major';
+}
 
 $updates = [];
 $params = [];
@@ -64,7 +63,6 @@ if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] ===
         exit("Failed to save uploaded profile picture.");
     }
 
-    // Save relative path to DB
     $updates[] = "profile_picture = ?";
     $params[] = 'uploads/' . $filename;
 }
@@ -74,9 +72,12 @@ if (empty($updates)) {
 }
 
 $params[] = $userId;
-$sql = "UPDATE users SET " . implode(', ', $updates) . ", otp_code = NULL, otp_expires_at = NULL WHERE id = ?";
+$sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->execute($params);
 
-echo "Profile updated successfully.";
+if ($stmt->execute($params)) {
+    echo "Profile updated successfully.";
+} else {
+    echo "Failed to update profile.";
+}
 ?>

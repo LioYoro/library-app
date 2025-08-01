@@ -13,7 +13,7 @@ $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) die("User not found.");
+if (!$user) die("User  not found.");
 ?>
 
 <?php include '../views/header.php'; ?>
@@ -22,219 +22,268 @@ if (!$user) die("User not found.");
   <h2 class="text-center text-2xl font-bold mb-8">Edit Your Profile</h2>
 
   <form id="profileForm" method="post" enctype="multipart/form-data">
- <!-- Profile Picture -->
-<div class="col-span-2 flex items-center gap-6 mb-8">
-  <!-- Image Preview -->
-  <div class="w-28 h-28 rounded-full overflow-hidden border border-gray-300 flex items-center justify-center bg-gray-100">
-    <?php
-    $hasProfilePicture = !empty($user['profile_picture']);
-    $profileImagePath = $hasProfilePicture ? '/library-app/' . htmlspecialchars($user['profile_picture']) : '/library-app/assets/default_pp.png';
-    ?>
-    <img
-      id="profilePreview"
-      src="<?= $profileImagePath ?>"
-      alt="Profile Picture"
-      class="object-cover w-full h-full">
-  </div>
-
-  <!-- Upload Input -->
-  <div>
-    <label for="profile_picture" class="block text-sm font-medium mb-1">Upload New Picture</label>
-    <input type="file" name="profile_picture" id="profile_picture" accept="image/*" class="block text-sm mb-1">
-    <p class="text-xs text-gray-500 mb-2">JPEG or PNG up to 2MB.</p>
-
-    <!-- Hidden input to signal removal -->
-    <input type="hidden" name="remove_picture" id="remove_picture" value="0">
-
-    <!-- Remove button (moved below) -->
-    <button type="button"
-      id="removeImageBtn"
-      class="bg-white border border-red-500 text-red-500 text-xs px-3 py-1 rounded shadow hover:bg-red-500 hover:text-white transition">
-      Remove Image
-    </button>
-  </div>
-</div>
-
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-    <!-- Left Column: Primary Info -->
-    <div class="space-y-4">
-      <h3 class="text-lg font-semibold mb-4">📌 Primary Information</h3>
-
-      <div>
-        <label class="block font-medium mb-1">First Name</label>
-        <input type="text" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" class="w-full border px-3 py-2 rounded">
+    <!-- Profile Picture -->
+    <div class="col-span-2 flex items-center gap-6 mb-8">
+      <!-- Image Preview -->
+      <div class="w-28 h-28 rounded-full overflow-hidden border border-gray-300 flex items-center justify-center bg-gray-100">
+        <?php
+        $hasProfilePicture = !empty($user['profile_picture']);
+        $profileImagePath = $hasProfilePicture ? '/library-app/' . htmlspecialchars($user['profile_picture']) : '/library-app/assets/default_pp.png';
+        ?>
+        <img
+          id="profilePreview"
+          src="<?= $profileImagePath ?>"
+          alt="Profile Picture"
+          class="object-cover w-full h-full">
       </div>
 
+      <!-- Upload Input -->
       <div>
-        <label class="block font-medium mb-1">Last Name</label>
-        <input type="text" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" class="w-full border px-3 py-2 rounded">
-      </div>
+        <label for="profile_picture" class="block text-sm font-medium mb-1">Upload New Picture</label>
+        <input type="file" name="profile_picture" id="profile_picture" accept="image/*" class="block text-sm mb-1">
+        <p class="text-xs text-gray-500 mb-2">JPEG or PNG up to 2MB.</p>
 
-      <div>
-        <label class="block font-medium mb-1">Contact Number</label>
-        <input type="text" name="contact_number" value="<?= htmlspecialchars($user['contact_number']) ?>" class="w-full border px-3 py-2 rounded">
-      </div>
+        <!-- Hidden input to signal removal -->
+        <input type="hidden" name="remove_picture" id="remove_picture" value="0">
 
-      <div>
-        <label class="block font-medium mb-1">Email</label>
-        <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" class="w-full border px-3 py-2 rounded">
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">New Password (Leave blank if no change)</label>
-        <input type="password" name="password" class="w-full border px-3 py-2 rounded">
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">Gender</label>
-        <select name="gender" class="w-full border px-3 py-2 rounded">
-          <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-          <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">Age</label>
-        <input type="number" name="age" value="<?= htmlspecialchars($user['age']) ?>" class="w-full border px-3 py-2 rounded">
-      </div>
-
-      <div>
-        <label for="religion" class="block font-medium mb-1">Relihiyon</label>
-        <select name="religion" id="religion" class="w-full border px-3 py-2 rounded" required>
-          <option value="">Pumili ng Relihiyon</option>
-          <?php
-          $religions = [
-            "Catholic" => "Katoliko",
-            "Christian" => "Kristiyano",
-            "Iglesia ni Cristo (INC)" => "Iglesia ni Cristo (INC)",
-            "Islam" => "Islam",
-            "Protestant" => "Protestant",
-            "Others" => "Iba pa"
-          ];
-          foreach ($religions as $value => $label) {
-            $selected = ($user['religion'] === $value) ? 'selected' : '';
-            echo "<option value=\"$value\" $selected>$label</option>";
-          }
-          ?>
-        </select>
+        <!-- Remove button (moved below) -->
+        <button type="button"
+          id="removeImageBtn"
+          class="bg-white border border-red-500 text-red-500 text-xs px-3 py-1 rounded shadow hover:bg-red-500 hover:text-white transition">
+          Remove Image
+        </button>
       </div>
     </div>
 
-    <!-- Right Column: Secondary + Education Info -->
-    <div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Left Column: Primary Info -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold mb-4">🏠 Secondary Information</h3>
+        <h3 class="text-lg font-semibold mb-4">📌 Primary Information</h3>
 
         <div>
-          <label class="block font-medium mb-1">Are you a Mandaluyong resident?</label>
-          <select name="is_mandaluyong_resident" class="w-full border px-3 py-2 rounded">
-            <option value="">-- Select --</option>
-            <option value="yes" <?= $user['is_mandaluyong_resident'] === 'yes' ? 'selected' : '' ?>>Yes</option>
-            <option value="no" <?= $user['is_mandaluyong_resident'] === 'no' ? 'selected' : '' ?>>No</option>
+          <label class="block font-medium mb-1">First Name</label>
+          <input type="text" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Last Name</label>
+          <input type="text" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Contact Number</label>
+          <input type="text" name="contact_number" value="<?= htmlspecialchars($user['contact_number']) ?>" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Email</label>
+          <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">New Password (Leave blank if no change)</label>
+          <input type="password" name="password" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Gender</label>
+          <select name="gender" class="w-full border px-3 py-2 rounded">
+            <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+            <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
           </select>
         </div>
 
         <div>
-          <label class="block font-medium mb-1" for="barangay">Barangay</label>
-          <select name="barangay" id="barangay" class="w-full border px-3 py-2 rounded">
-            <option value="">--Pumili--</option>
+          <label class="block font-medium mb-1">Age</label>
+          <input type="number" name="age" value="<?= htmlspecialchars($user['age']) ?>" class="w-full border px-3 py-2 rounded">
+        </div>
+
+        <div>
+          <label for="religion" class="block font-medium mb-1">Relihiyon</label>
+          <select name="religion" id="religion" class="w-full border px-3 py-2 rounded" required>
+            <option value="">Pumili ng Relihiyon</option>
             <?php
-            $barangays = [
-              "Addition Hills", "Bagong Silang", "Barangka Drive", "Barangka Ibaba",
-              "Barangka Ilaya", "Barangka Itaas", "Buayang Bato", "Burol",
-              "Daang Bakal", "Hagdang Bato Itaas", "Hagdang Bato Libis", "Harapin ang Bukas",
-              "Highway Hills", "Hulo", "Mabini-J. Rizal", "Malamig",
-              "Mauway", "Namayan", "New Zaniga", "Old Zaniga",
-              "Pag-asa", "Plainview", "Pleasant Hills", "Poblacion",
-              "San Jose", "Vergara", "Wack-Wack-Greenhills East"
+            $religions = [
+              "Catholic" => "Katoliko",
+              "Christian" => "Kristiyano",
+              "Iglesia ni Cristo (INC)" => "Iglesia ni Cristo (INC)",
+              "Islam" => "Islam",
+              "Protestant" => "Protestant",
+              "Others" => "Iba pa"
             ];
-            foreach ($barangays as $b) {
-              $selected = ($user['barangay'] === $b) ? 'selected' : '';
-              echo "<option value=\"$b\" $selected>$b</option>";
+            foreach ($religions as $value => $label) {
+              $selected = ($user['religion'] === $value) ? 'selected' : '';
+              echo "<option value=\"$value\" $selected>$label</option>";
             }
             ?>
           </select>
         </div>
-
-        <div>
-          <label class="block font-medium mb-1">City Outside Mandaluyong</label>
-          <input type="text" name="city_outside_mandaluyong" value="<?= htmlspecialchars($user['city_outside_mandaluyong']) ?>" class="w-full border px-3 py-2 rounded">
-        </div>
       </div>
 
-      <div class="space-y-4 pt-4 border-t border-gray-300">
-        <h3 class="text-lg font-semibold mb-4">🎓 Education Information</h3>
+      <!-- Right Column: Secondary + Education Info -->
+      <div class="space-y-6">
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold mb-4">🏠 Secondary Information</h3>
 
-        <div>
-          <label class="block font-medium mb-1">Education Level</label>
-          <input type="text" name="education_level" value="<?= htmlspecialchars($user['education_level']) ?>" class="w-full border px-3 py-2 rounded">
+          <div>
+            <label class="block font-medium mb-1">Are you a Mandaluyong resident?</label>
+            <select name="is_mandaluyong_resident" class="w-full border px-3 py-2 rounded">
+              <option value="">-- Select --</option>
+              <option value="yes" <?= $user['is_mandaluyong_resident'] === 'yes' ? 'selected' : '' ?>>Yes</option>
+              <option value="no" <?= $user['is_mandaluyong_resident'] === 'no' ? 'selected' : '' ?>>No</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1" for="barangay">Barangay</label>
+            <select name="barangay" id="barangay" class="w-full border px-3 py-2 rounded">
+              <option value="">--Pumili--</option>
+              <?php
+              $barangays = [
+                "Addition Hills", "Bagong Silang", "Barangka Drive", "Barangka Ibaba",
+                "Barangka Ilaya", "Barangka Itaas", "Buayang Bato", "Burol",
+                "Daang Bakal", "Hagdang Bato Itaas", "Hagdang Bato Libis", "Harapin ang Bukas",
+                "Highway Hills", "Hulo", "Mabini-J. Rizal", "Malamig",
+                "Mauway", "Namayan", "New Zaniga", "Old Zaniga",
+                "Pag-asa", "Plainview", "Pleasant Hills", "Poblacion",
+                "San Jose", "Vergara", "Wack-Wack-Greenhills East"
+              ];
+              foreach ($barangays as $b) {
+                $selected = ($user['barangay'] === $b) ? 'selected' : '';
+                echo "<option value=\"$b\" $selected>$b</option>";
+              }
+              ?>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">City Outside Mandaluyong</label>
+            <input type="text" name="city_outside_mandaluyong" value="<?= htmlspecialchars($user['city_outside_mandaluyong']) ?>" class="w-full border px-3 py-2 rounded">
+          </div>
         </div>
 
-        <div>
-          <label class="block font-medium mb-1">Course</label>
-          <input type="text" name="course" value="<?= htmlspecialchars($user['course']) ?>" class="w-full border px-3 py-2 rounded">
-        </div>
+        <!-- College and SHS Dropdowns -->
+        <div class="space-y-4 pt-4 border-t border-gray-300">
+          <h3 class="text-lg font-semibold mb-4">🎓 Education Information</h3>
 
-        <div>
-          <label class="block font-medium mb-1">School Name</label>
-          <input type="text" name="school_name" value="<?= htmlspecialchars($user['school_name']) ?>" class="w-full border px-3 py-2 rounded">
+          <div>
+            <label class="block font-medium mb-1">Education Level</label>
+            <select name="education_level" class="w-full border px-3 py-2 rounded" onchange="toggleEducationDropdowns(this.value)">
+              <option value="">--Pumili--</option>
+              <option value="JHS" <?= $user['education_level'] === 'JHS' ? 'selected' : '' ?>>Junior High School</option>
+              <option value="SHS" <?= $user['education_level'] === 'SHS' ? 'selected' : '' ?>>Senior High School</option>
+              <option value="College" <?= $user['education_level'] === 'College' ? 'selected' : '' ?>>Kolehiyo</option>
+            </select>
+          </div>
+
+          <!-- College -->
+          <div id="collegeDropdown" class="<?= $user['education_level'] === 'College' ? '' : 'hidden' ?>">
+              <label class="block font-medium mb-1" for="major">Kurso sa Kolehiyo</label>
+              <input list="collegeCourseList" name="major" id="major" value="<?= htmlspecialchars($user['major']) ?>" class="w-full border px-3 py-2 rounded">
+              <datalist id="collegeCourseList">
+                  <option value="AB Political Science">
+                  <option value="AB Psychology">
+                  <option value="BA Broadcasting">
+                  <option value="BA History">
+                  <option value="BA Political Science">
+                  <option value="BS Accountancy">
+                  <option value="BS Architecture">
+                  <option value="BS Civil Engineering">
+                  <option value="BS Computer Engineering">
+                  <option value="BS Dentistry">
+                  <option value="BS ECE">
+                  <option value="BS Economics">
+                  <option value="BS Education">
+                  <option value="BS Education Major in Filipino">
+                  <option value="BS Education Major in Math">
+                  <option value="BS Education Major in Science">
+                  <option value="BS Education Major in Social Studies">
+                  <option value="BS Electrical Engineering">
+                  <option value="BS Elementary Education">
+                  <option value="BS Electronics Engineering">
+                  <option value="BS Entrepreneurship">
+                  <option value="BS Hospitality Management">
+                  <option value="BS Industrial Engineering">
+                  <option value="BS Information Technology">
+                  <option value="BS IT">
+                  <option value="BS Management Accounting">
+                  <option value="BS Mechanical Engineering">
+                  <option value="BS Nursing">
+                  <option value="BS Office Administration">
+                  <option value="BS Psychology">
+                  <option value="BSBA Financial Management">
+                  <option value="BSBA Human Resource Management">
+                  <option value="BSBA Marketing Management">
+                  <option value="BSE Filipino">
+                  <option value="BSE Math">
+                  <option value="BSE Science">
+                  <option value="BSE Social Studies">
+                  <option value="BSED Filipino">
+                  <option value="BSED ICT">
+                  <option value="BSED Science">
+                  <option value="BSES Social Studies">
+                  <option value="BTVTED Garments, Fashion and Design">
+              </datalist>
+          </div>
+
+          <!-- SHS -->
+          <div id="shsDropdown" class="<?= $user['education_level'] === 'SHS' ? '' : 'hidden' ?>">
+              <label class="block font-medium mb-1" for="strand">Strand sa SHS</label>
+              <select name="strand" id="strand" class="w-full border px-3 py-2 rounded">
+                  <option value="">--Pumili ng Strand--</option>
+                  <option value="ABM" <?= $user['strand'] === 'ABM' ? 'selected' : '' ?>>ABM (Accountancy, Business and Management)</option>
+                  <option value="STEM" <?= $user['strand'] === 'STEM' ? 'selected' : '' ?>>STEM (Science, Technology, Engineering, and Mathematics)</option>
+                  <option value="HUMSS" <?= $user['strand'] === 'HUMSS' ? 'selected' : '' ?>>HUMSS (Humanities and Social Sciences)</option>
+                  <option value="GAS" <?= $user['strand'] === 'GAS' ? 'selected' : '' ?>>GAS (General Academic Strand)</option>
+                  <option value="TVL" <?= $user['strand'] === 'TVL' ? 'selected' : '' ?>>TVL (Technical-Vocational-Livelihood)</option>
+                  <option value="Arts and Design" <?= $user['strand'] === 'Arts and Design' ? 'selected' : '' ?>>Arts and Design</option>
+                  <option value="Sports Track" <?= $user['strand'] === 'Sports Track' ? 'selected' : '' ?>>Sports Track</option>
+              </select>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">School Name</label>
+            <input type="text" name="school_name" value="<?= htmlspecialchars($user['school_name']) ?>" class="w-full border px-3 py-2 rounded">
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Form alert (above Confirm Changes button) -->
-<div id="formAlert" class="text-center text-red-600 font-medium mb-4 hidden"></div>
+    <!-- Form alert (above Confirm Changes button) -->
+    <div id="formAlert" class="text-center text-red-600 font-medium mb-4 hidden"></div>
 
-<!-- Submit button -->
-<div class="mt-10 text-center">
-  <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
-    Confirm Changes
-  </button>
-</div>
-
-</form>
-
-<!-- OTP Modal -->
-<div id="otpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white p-6 rounded-lg shadow-md w-80">
-    <h2 class="text-lg font-semibold mb-2">Enter OTP</h2>
-    <input type="text" id="otpInput" class="w-full border px-3 py-2 rounded mb-3" placeholder="6-digit OTP">
-    <div id="otpError" class="text-red-500 text-sm mb-2 hidden"></div>
-    <div class="flex justify-end gap-2">
-      <button id="cancelBtn" class="text-sm px-4 py-1 border border-gray-300 rounded">Cancel</button>
-      <button id="confirmOtpBtn" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Confirm</button>
+    <!-- Submit button -->
+    <div class="mt-10 text-center">
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+        Confirm Changes
+      </button>
     </div>
-  </div>
-</div>
-
+  </form>
 </div>
 
 <script>
-const profileForm = document.querySelector("#profileForm");
-const otpModal = document.querySelector("#otpModal");
-const otpInput = document.querySelector("#otpInput");
-const otpError = document.querySelector("#otpError");
-const formAlert = document.querySelector("#formAlert");
-
-const mandaluyongSelect = document.querySelector('select[name="is_mandaluyong_resident"]');
-const barangaySelect = document.querySelector('select[name="barangay"]');
-
-// Toggle Barangay enable/disable
-function toggleBarangayDropdown() {
-  if (mandaluyongSelect.value === 'yes') {
-    barangaySelect.disabled = false;
-    barangaySelect.classList.remove("bg-gray-100");
-  } else {
-    barangaySelect.disabled = true;
-    barangaySelect.value = "";
-    barangaySelect.classList.add("bg-gray-100");
+function toggleEducationDropdowns(level) {
+  document.getElementById('collegeDropdown').classList.add('hidden');
+  document.getElementById('shsDropdown').classList.add('hidden');
+  if (level === 'College') {
+    document.getElementById('collegeDropdown').classList.remove('hidden');
+  } else if (level === 'SHS') {
+    document.getElementById('shsDropdown').classList.remove('hidden');
   }
 }
-toggleBarangayDropdown();
-mandaluyongSelect.addEventListener("change", toggleBarangayDropdown);
+toggleEducationDropdowns("<?= $user['education_level'] ?>");
+</script>
+
+<script>
+const educationLevelSelect = document.querySelector("select[name='education_level']");
+educationLevelSelect.addEventListener("change", function() {
+  toggleEducationDropdowns(this.value);
+});
+</script>
+
+<script>
+const profileForm = document.querySelector("#profileForm");
+const formAlert = document.querySelector("#formAlert");
 
 // Capture initial form data (excluding files)
 const initialData = {};
@@ -276,67 +325,39 @@ profileForm.addEventListener("submit", async function (e) {
     return;
   }
 
-  const sendOtp = await fetch("send_otp.php");
-  const otpResponse = await sendOtp.text();
-
-  if (!otpResponse.includes("OTP sent")) {
-    showFormMessage("❌ Failed to send OTP.");
-    return;
-  }
-
-  formAlert.classList.add("hidden");
-  otpModal.classList.remove("hidden");
-});
-
-// Cancel OTP modal
-document.querySelector("#cancelBtn").onclick = () => {
-  otpModal.classList.add("hidden");
-  otpInput.value = '';
-  otpError.classList.add("hidden");
-};
-
-// Confirm OTP
-document.querySelector("#confirmOtpBtn").onclick = async () => {
-  const otp = otpInput.value.trim();
-  if (!otp) {
-    otpError.textContent = "Please enter the OTP.";
-    otpError.classList.remove("hidden");
-    return;
-  }
-
   const formData = new FormData(profileForm);
-  formData.append("otp", otp);
-
-  const res = await fetch("save_changes.php", {
-    method: "POST",
-    body: formData
-  });
-
-  const text = await res.text();
-  if (text.includes("successfully")) {
-    alert("✅ " + text);
-    window.location.reload();
-  } else {
-    otpError.textContent = text;
-    otpError.classList.remove("hidden");
+  
+  try {
+    const response = await fetch("save_changes.php", {
+      method: "POST",
+      body: formData
+    });
+    
+    const result = await response.text();
+    
+    if (result.includes("successfully")) {
+      showFormMessage("✅ Profile updated successfully!", "text-green-600");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      showFormMessage("❌ " + result);
+    }
+  } catch (error) {
+    showFormMessage("❌ An error occurred: " + error.message);
   }
-};
+});
 </script>
 
 <script>
 document.querySelector('#profile_picture').addEventListener('change', function (e) {
   const file = e.target.files[0];
   const previewImg = document.getElementById('profilePreview');
-  const noImageText = document.getElementById('noImageText');
 
   if (file) {
     previewImg.src = URL.createObjectURL(file);
-    previewImg.classList.remove("hidden");
-    noImageText.classList.add("hidden");
   } else {
-    previewImg.src = "";
-    previewImg.classList.add("hidden");
-    noImageText.classList.remove("hidden");
+    previewImg.src = '/library-app/assets/default_pp.png'; // Default image path
   }
 });
 </script>
@@ -365,7 +386,5 @@ removeBtn.addEventListener('click', function () {
   removeInput.value = '1'; // Set remove flag
 });
 </script>
-
-
 
 <?php include '../views/footer.php'; ?>

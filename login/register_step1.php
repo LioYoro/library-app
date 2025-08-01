@@ -84,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <option value="Islam">Iglesia ni Cristo (INC)</option>
             <option value="Islam">Islam</option>
             <option value="Islam">Protestant</option>
-            <option value="Others">Iba pa</option>
+            <option value="Others">Wala sa nabanggit</option>
         </select>
 
         <button type="submit">Susunod</button>

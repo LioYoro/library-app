@@ -5,10 +5,11 @@ session_start();
 // Save step 2 values to session
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $_SESSION['registration']['education_level'] = $_POST['education_level'];
-$_SESSION['registration']['course'] = $_POST['course'];
-$_SESSION['registration']['school_name'] = $_POST['school_name'];
-
+  $_SESSION['registration']['major'] = $_POST['major'] ?? '';
+  $_SESSION['registration']['strand'] = $_POST['strand'] ?? '';
+  $_SESSION['registration']['school_name'] = $_POST['school_name'];
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="tl">
