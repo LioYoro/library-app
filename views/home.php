@@ -105,8 +105,9 @@ if (isset($_SESSION['user_id'])) {
         error_log("User with ID " . $_SESSION['user_id'] . " not found in database for recommendations.");
     }
 } else {
-    error_log("{$_SESSION['user_id']} not set. Cannot fetch field-based recommendations.");
+    error_log("user_id not set. Cannot fetch field-based recommendations.");
 }
+
 
 ?>
 
