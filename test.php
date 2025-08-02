@@ -117,7 +117,10 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kaban ng Hiyas Congressional Library</title>
-    <link rel="stylesheet" href="css/style.css"> 
+    <!-- <link rel="stylesheet" href="css/style.css">  -->
+    <link rel="stylesheet" href="css/map.css">
+    <link rel="stylesheet" href="css/announcement.css">
+    <link rel="stylesheet" href="css/booksection.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
 <body>
@@ -129,30 +132,36 @@ if (isset($_SESSION['user_id'])) {
         <p class="text-gray-600">Explore academic knowledge, discover resources, and ask questions.</p>
     </div>
 
-    <section class="border border-black rounded-md relative select-none">
-        <div class="absolute top-1 left-1 text-black text-xl cursor-pointer"><i class="fas fa-volume-up"></i></div>
-        <div class="flex items-center justify-between px-2 py-2">
-            <button class="text-gray-400 hover:text-gray-700"><i class="fas fa-chevron-left text-2xl"></i></button>
-            <div class="flex gap-4 max-w-[100%]">
-                <img src="https://storage.googleapis.com/a1aa/image/8535a2ea-c68e-47a1-475e-c583ecea6076.jpg" class="object-contain max-h-[500px]" width="250" height="400" />
-                <div class="text-base leading-tight max-w-[60%] text-gray-700">
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                </div>
-            </div>
-            <button class="text-gray-400 hover:text-gray-700"><i class="fas fa-chevron-right text-2xl"></i></button>
-        </div>
-        <div class="flex justify-center gap-2 py-1">
-            <span class="w-3 h-3 rounded-full bg-gray-700"></span>
-            <span class="w-3 h-3 rounded-full bg-gray-300"></span>
-        </div>
-    </section>
+    <section class="custom-slider-section">
+  <div class="volume-icon">
+    <i class="fas fa-volume-up"></i>
+  </div>
+  <div class="slider-content">
+    <button class="slider-nav">
+      <i class="fas fa-chevron-left"></i>
+    </button>
 
-    <div class="flex flex-col md:flex-row gap-6">
+    <div class="slider-main">
+      <img src="https://storage.googleapis.com/a1aa/image/8535a2ea-c68e-47a1-475e-c583ecea6076.jpg" class="slider-image" />
+      <div class="slider-text">
+        <p>Something Something Something</p>
+        <p>Something Something Something</p>
+        <p>Something Something Something</p>
+        <p>Something Something Something</p>
+      </div>
+    </div>
 
-        <aside class="w-full md:w-2/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+    <button class="slider-nav">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <div class="slider-dots">
+    <span class="dot active"></span>
+    <span class="dot"></span>
+  </div>
+</section>
+
 
             <?php
             function getCommentCount($pdo, $title) {
@@ -162,71 +171,66 @@ if (isset($_SESSION['user_id'])) {
             }
             ?>
 
-            <?php if ($viewedBook): ?>
+            <!-- ✅ HTML CLEANED UP VERSION -->
 
-                <div>
-                    <h2 class="text-base font-bold mb-2"> Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <?php foreach ($recommendations as $b): ?>
-                            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
-                                class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-blue-400 hover:bg-blue-50 transition cursor-pointer space-y-1">
-                                <div class="font-semibold"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                                <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
-                                <div class="text-xs text-gray-600">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+<?php if ($viewedBook): ?>
+  <div class="section-block">
+    <h2 class="section-title">Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
+    <div class="book-grid">
+      <?php foreach ($recommendations as $b): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue">
+          <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+          <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+          <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
+          <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
 
-                <div>
-                    <h2 class="text-base font-bold mb-2">Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <?php foreach ($trending as $t): ?>
-                            <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>"
-                                class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-yellow-400 hover:bg-yellow-50 transition cursor-pointer space-y-1">
-                                <div class="font-semibold"><?= htmlspecialchars($t['TITLE']) ?></div>
-                                <?php if (!empty($t['CALL NUMBER'])): ?><div> <?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
-                                <div class="text-xs text-gray-600">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+  <div class="section-block">
+    <h2 class="section-title">Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
+    <div class="book-grid">
+      <?php foreach ($trending as $t): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow">
+          <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
+          <?php if (!empty($t['CALL NUMBER'])): ?><div> <?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
+          <div class="book-meta">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
 
-                <?php if (!empty($otherWorks)): ?>
-                <div>
-                    <h2 class="text-base font-bold mb-2">✍️Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <?php foreach ($otherWorks as $w): ?>
-                            <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>"
-                                class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-purple-400 hover:bg-purple-50 transition cursor-pointer space-y-1">
-                                <div class="font-semibold"><?= htmlspecialchars($w['TITLE']) ?></div>
-                                <?php if (!empty($w['CALL NUMBER'])): ?><div> <?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
-                                <div class="text-xs text-gray-600">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
+  <?php if (!empty($otherWorks)): ?>
+    <div class="section-block">
+      <h2 class="section-title">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
+      <div class="book-grid">
+        <?php foreach ($otherWorks as $w): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple">
+            <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
+            <?php if (!empty($w['CALL NUMBER'])): ?><div> <?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
+            <div class="book-meta">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+<?php endif; ?>
 
-            <?php endif; ?>
-
-            <div>
-                <h2 class="text-lg font-semibold mb-3"> Top Trending Books</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <?php
-                    $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
-                    foreach ($stmt as $b): ?>
-                        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"
-                            class="block border border-gray-300 rounded-lg px-3 py-2 hover:ring-2 hover:ring-orange-400 hover:bg-orange-50 transition cursor-pointer space-y-1 text-center">
-                            <div class="font-semibold text-sm"><?= htmlspecialchars($b['TITLE']) ?></div>
-                            <?php if (!empty($b['AUTHOR'])): ?><div class="text-xs text-gray-600">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                            <div class="text-xs text-gray-500">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </aside>
+<div class="section-block">
+  <h2 class="section-title">Top Trending Books</h2>
+  <div class="book-grid top-trending">
+    <?php
+    $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
+    foreach ($stmt as $b): ?>
+      <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange">
+        <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
+        <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+        <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+      </a>
+    <?php endforeach; ?>
+  </div>
+</div>
 
         <aside class="w-full md:w-1/3 flex flex-col gap-4 text-sm">
 
@@ -383,21 +387,19 @@ if (isset($_SESSION['user_id'])) {
         </aside>
     </div>
 
-    <div class="text-center mt-8 space-y-3">
-        <h2 class="text-2xl font-bold">Visit Us!</h2>
-        <div class="mx-auto max-w-full rounded-md overflow-hidden shadow-md" style="width:100%; max-width:600px; height:450px;">
+    <div class="google-map-container text-center mt-8 space-y-3">
+    <h2 class="section-title">Visit Us!</h2>
+    <div class="map-wrapper">
             <iframe
-                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph"
-                width="100%"
-                height="100%"
-                style="border:0;"
-                allowfullscreen=""
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade">
+            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph"
+            class="map-frame"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
             </iframe>
         </div>
     </div>
 </div>
-
+<!-- cute ang pokdakodasok -->
 </body>
 </html>
