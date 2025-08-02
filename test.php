@@ -121,6 +121,8 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/map.css">
     <link rel="stylesheet" href="css/announcement.css">
     <link rel="stylesheet" href="css/booksection.css">
+    <link rel="stylesheet" href="css/info.css">
+    <link rel="stylesheet" href="css/comment.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
 <body>
@@ -232,158 +234,100 @@ if (isset($_SESSION['user_id'])) {
   </div>
 </div>
 
-        <aside class="w-full md:w-1/3 flex flex-col gap-4 text-sm">
+        <aside class="aside-section">
+  <?php if (isset($_SESSION['user_id'])): ?>
+    <section class="aside-box" id="liked-section">
+      <h3 class="aside-title">👍 Your Likes</h3>
+      <?php if (empty($likedBooks)): ?>
+        <p class="aside-empty">You haven't liked any books yet.</p>
+      <?php else: ?>
+        <?php foreach ($likedBooks as $b): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
+            <div class="aside-entry">
+              <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'default.jpg') ?>" class="aside-image" alt="Book cover">
+              <div>
+                <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+                <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+                <div class="aside-meta">Likes: <?= $b['Like'] ?></div>
+              </div>
+            </div>
+          </a>
+        <?php endforeach; ?>
+        <div class="aside-pagination" id="like-pagination">
+          <?php for ($i = 1; $i <= $totalLikePages; $i++): ?>
+            <a href="?like_page=<?= $i ?>" class="page-btn <?= $i === $likePage ? 'active' : '' ?>"> <?= $i ?> </a>
+          <?php endfor; ?>
+        </div>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 
-            <?php
-            if (isset($_SESSION['user_id'])):
-                $userId = $_SESSION['user_id'];
-                $likesPerPage = 5;
-                $likePage = max((int)($_GET['like_page'] ?? 1), 1);
-                $offset = ($likePage - 1) * $likesPerPage;
+  <section class="aside-box" id="recommended-section">
+    <h3 class="aside-title">🎓 Recommended for Your Field</h3>
+    <?php if (empty($recommendedBooks)): ?>
+      <p class="aside-empty">No recommendations available for your field.</p>
+    <?php else: ?>
+      <?php foreach ($recommendedBooks as $b): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
+          <div class="aside-entry">
+            <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'default.jpg') ?>" class="aside-image" alt="Book cover">
+            <div>
+              <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+              <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
+              <div class="aside-meta">Category: <?= htmlspecialchars($b['General_Category']) ?></div>
+            </div>
+          </div>
+        </a>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </section>
 
-                // Fetch paginated liked books
-                $likedStmt = $pdo->prepare("
-                    SELECT b.* FROM book_feedback bf
-                    JOIN books b ON b.TITLE = bf.book_title
-                    WHERE bf.user_id = ? AND bf.feedback = 'like'
-                    ORDER BY bf.id DESC
-                    LIMIT $likesPerPage OFFSET $offset
-                ");
-                $likedStmt->execute([$userId]);
-                $likedBooks = $likedStmt->fetchAll();
+  <section class="aside-box" id="commented-section">
+    <h3 class="aside-title">💬 Top Commented Books</h3>
+    <?php if (empty($topCommented)): ?>
+      <p class="aside-empty">No books have comments yet.</p>
+    <?php else: ?>
+      <?php foreach ($topCommented as $b): ?>
+        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
+          <div class="aside-entry">
+            <img src="default.jpg" class="aside-image" alt="Book cover">
+            <div>
+              <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+              <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+              <div class="aside-meta">💬 <?= $b['comment_count'] ?> comment<?= $b['comment_count'] == 1 ? '' : 's' ?></div>
+            </div>
+          </div>
+        </a>
+      <?php endforeach; ?>
+      <div class="aside-pagination" id="comment-pagination">
+        <?php for ($i = 1; $i <= $totalCommentedPages; $i++): ?>
+          <a href="?commented_page=<?= $i ?>" class="page-btn <?= $i === $commentedPage ? 'active' : '' ?>"> <?= $i ?> </a>
+        <?php endfor; ?>
+      </div>
+    <?php endif; ?>
+  </section>
+</aside>
 
-                // Get total count for pagination
-                $countStmt = $pdo->prepare("SELECT COUNT(*) FROM book_feedback WHERE user_id = ? AND feedback = 'like'");
-                $countStmt->execute([$userId]);
-                $totalLikes = (int)$countStmt->fetchColumn();
-                $totalLikePages = max(1, ceil($totalLikes / $likesPerPage));
-            ?>
+            <section class="info-box">
+  <h3 class="info-title">External Resources</h3>
+  <ul class="info-list">
+    <li><a href="#" class="info-link">Online Journals</a></li>
+    <li><a href="#" class="info-link">Educational Databases</a></li>
+    <li><a href="#" class="info-link">E-book Platforms</a></li>
+  </ul>
+</section>
 
-            <section class="border border-black rounded-lg max-h-[300px] overflow-y-auto scrollbar-thin p-3">
-                <h3 class="font-semibold text-base mb-2">👍 Your Likes</h3>
-                
-                <?php if (empty($likedBooks)): ?>
-                    <p class="text-sm text-gray-600">You haven't liked any books yet.</p>
-                <?php else: ?>
-                    <?php foreach ($likedBooks as $b): ?>
-                        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-blue-50 transition rounded px-2 py-1">
-                            <div class="flex gap-2 items-center">
-                                <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg') ?>" class="w-10 h-14 object-cover border" alt="Book cover">
-                                <div>
-                                    <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                    <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-                                    <div class="text-gray-400 text-sm">Likes: <?= $b['Like'] ?></div>
-                                </div>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
+<section class="info-box">
+  <h3 class="info-title">Library Guidelines</h3>
+  <ul class="info-list">
+    <li>Maintain silence.</li>
+    <li>Handle books with care.</li>
+    <li>Return books on time.</li>
+    <li>No food or drinks allowed.</li>
+    <li>Respect fellow readers.</li>
+  </ul>
+</section>
 
-                    <div class="mt-2 flex gap-1 flex-wrap justify-center text-xs">
-                        <?php for ($i = 1; $i <= $totalLikePages; $i++): ?>
-                            <a href="?like_page=<?= $i ?>"
-                                class="px-2 py-1 rounded <?= $i === $likePage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300' ?>">
-                                <?= $i ?>
-                            </a>
-                        <?php endfor; ?>
-                    </div>
-                <?php endif; ?>
-            </section>
-
-            <?php endif; ?>
-
-            <section class="border border-black rounded-lg max-h-[300px] overflow-y-auto scrollbar-thin p-3">
-                <h3 class="font-semibold text-base mb-2">🎓 Recommended for Your Field</h3>
-
-                <?php if (empty($recommendedBooks)): ?>
-                    <p class="text-sm text-gray-600">No recommendations available for your field.</p>
-                <?php else: ?>
-                    <?php foreach ($recommendedBooks as $b): ?>
-                        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-blue-50 transition rounded px-2 py-1">
-                            <div class="flex gap-2 items-center">
-                                <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg') ?>"
-                                    class="w-10 h-14 object-cover border" alt="Book cover">
-                                <div>
-                                    <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                    <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
-                                    <div class="text-gray-400 text-sm">Category: <?= htmlspecialchars($b['General_Category']) ?></div>
-                                </div>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </section>
-
-            <?php
-            $commentedPage = max((int)($_GET['commented_page'] ?? 1), 1);
-            $commentsPerPage = 5;
-            $commentOffset = ($commentedPage - 1) * $commentsPerPage;
-
-            // Fetch most commented books (paginated)
-            $commentedStmt = $pdo->prepare("
-                SELECT b.*, COUNT(c.id) as comment_count
-                FROM comments c
-                JOIN books b ON b.TITLE = c.book_title
-                GROUP BY c.book_title
-                ORDER BY comment_count DESC
-                LIMIT $commentsPerPage OFFSET $commentOffset
-            ");
-            $commentedStmt->execute();
-            $topCommented = $commentedStmt->fetchAll();
-
-            // Get total for pagination
-            $totalCommentsStmt = $pdo->query("SELECT COUNT(DISTINCT book_title) FROM comments");
-            $totalCommentedBooks = (int)$totalCommentsStmt->fetchColumn();
-            $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
-            ?>
-
-            <section class="border border-black rounded-lg max-h-[300px] overflow-y-auto scrollbar-thin p-3">
-                <h3 class="font-semibold text-base mb-2">💬 Top Commented Books</h3>
-                <?php if (empty($topCommented)): ?>
-                    <p class="text-sm text-gray-600">No books have comments yet.</p>
-                <?php else: ?>
-                    <?php foreach ($topCommented as $b): ?>
-                        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block mb-3 hover:bg-gray-50 transition rounded px-2 py-1">
-                            <div class="flex gap-2 items-center">
-                                <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="w-10 h-14 object-cover border" alt="Book cover">
-                                <div>
-                                    <div class="font-bold"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                    <div class="text-gray-500">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-                                    <div class="text-gray-400 text-sm">💬 <?= $b['comment_count'] ?> comment<?= $b['comment_count'] == 1 ? '' : 's' ?></div>
-                                </div>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
-
-                    <div class="mt-2 flex gap-1 flex-wrap justify-center text-xs">
-                        <?php for ($i = 1; $i <= $totalCommentedPages; $i++): ?>
-                            <a href="?commented_page=<?= $i ?>"
-                                class="px-2 py-1 rounded <?= $i === $commentedPage ? 'bg-purple-600 text-white' : 'bg-gray-200 hover:bg-gray-300' ?>">
-                                <?= $i ?>
-                            </a>
-                        <?php endfor; ?>
-                    </div>
-                <?php endif; ?>
-            </section>
-
-            <section class="border border-black rounded-lg px-3 py-2">
-                <h3 class="font-semibold text-base mb-2">External Resources</h3>
-                <ul class="list-disc list-inside space-y-1 text-gray-700">
-                    <li><a href="#" class="hover:underline text-blue-600">Online Journals</a></li>
-                    <li><a href="#" class="hover:underline text-blue-600">Educational Databases</a></li>
-                    <li><a href="#" class="hover:underline text-blue-600">E-book Platforms</a></li>
-                </ul>
-            </section>
-
-            <section class="border border-black rounded-lg px-3 py-2">
-                <h3 class="font-semibold text-base mb-2">Library Guidelines</h3>
-                <ul class="list-disc list-inside text-gray-700 space-y-1">
-                    <li>Maintain silence.</li>
-                    <li>Handle books with care.</li>
-                    <li>Return books on time.</li>
-                    <li>No food or drinks allowed.</li>
-                    <li>Respect fellow readers.</li>
-                </ul>
-            </section>
         </aside>
     </div>
 
@@ -400,6 +344,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 </div>
+<script src="css/comment.js"></script>
 <!-- cute ang pokdakodasok -->
 </body>
 </html>
