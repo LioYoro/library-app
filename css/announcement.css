@@ -1,0 +1,71 @@
+.custom-slider-section {
+  border: 1px solid black;
+  border-radius: 0.375rem;
+  position: relative;
+  user-select: none;
+  padding: 0.5rem;
+}
+
+.volume-icon {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  color: black;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.slider-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.slider-nav i {
+  color: #9ca3af; /* gray-400 */
+  font-size: 1.5rem;
+  transition: color 0.3s;
+}
+
+.slider-nav:hover i {
+  color: #374151; /* gray-700 */
+}
+
+.slider-main {
+  display: flex;
+  gap: 1rem;
+  max-width: 100%;
+}
+
+.slider-image {
+  object-fit: contain;
+  max-height: 500px;
+  width: 250px;
+  height: 400px;
+}
+
+.slider-text {
+  font-size: 1rem;
+  line-height: 1.25rem;
+  max-width: 60%;
+  color: #374151; /* gray-700 */
+}
+
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.slider-dots .dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  background-color: #d1d5db; /* gray-300 */
+}
+
+.slider-dots .dot.active {
+  background-color: #374151; /* gray-700 */
+}
