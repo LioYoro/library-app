@@ -1,4 +1,7 @@
+ <!-- This will include the header -->
+
 <?php
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -110,7 +113,7 @@ if (isset($_SESSION['user_id'])) {
 
 
 ?>
-
+<!-- <?php //include 'include/headertest.php'; ?> This will include the header -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,9 +126,15 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="css/booksection.css">
     <link rel="stylesheet" href="css/info.css">
     <link rel="stylesheet" href="css/comment.css">
+    <link rel="stylesheet" href="css/logintest.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
-<body>
+
+   <?php include 'include/headertest.php'; ?> 
+<body style="margin: 0; padding-top: 80px; font-family: sans-serif;">
+
+
+<?php include 'include/logintest.php'; ?> <!-- This will include the login popup -->
 
 <div class="max-w-[1200px] mx-auto px-4 md:px-6 py-4 space-y-6">
 
@@ -164,187 +173,200 @@ if (isset($_SESSION['user_id'])) {
   </div>
 </section>
 
+<div class="flex flex-col md:flex-row gap-6">
+  <!-- Main Content Panel -->
+  <aside class="w-full md:w-2/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+    <?php
+    function getCommentCount($pdo, $title) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM comments WHERE book_title = ?");
+        $stmt->execute([$title]);
+        return (int)$stmt->fetchColumn();
+    }
+    ?>
 
-            <?php
-            function getCommentCount($pdo, $title) {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM comments WHERE book_title = ?");
-                $stmt->execute([$title]);
-                return (int)$stmt->fetchColumn();
-            }
-            ?>
+    <?php if ($viewedBook): ?>
+      <!-- Because You Viewed -->
+      <div class="section-block">
+        <h2 class="section-title">Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
+        <div class="book-grid">
+          <?php foreach ($recommendations as $b): ?>
+            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue">
+              <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+              <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+              <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
+              <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
 
-            <!-- ✅ HTML CLEANED UP VERSION -->
+      <!-- Trending in Category -->
+      <div class="section-block">
+        <h2 class="section-title">Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
+        <div class="book-grid">
+          <?php foreach ($trending as $t): ?>
+            <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow">
+              <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
+              <?php if (!empty($t['CALL NUMBER'])): ?><div><?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
+              <div class="book-meta">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
 
-<?php if ($viewedBook): ?>
-  <div class="section-block">
-    <h2 class="section-title">Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
-    <div class="book-grid">
-      <?php foreach ($recommendations as $b): ?>
-        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue">
-          <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-          <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-          <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
-          <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </div>
+      <!-- Other Works -->
+      <?php if (!empty($otherWorks)): ?>
+        <div class="section-block">
+          <h2 class="section-title">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
+          <div class="book-grid">
+            <?php foreach ($otherWorks as $w): ?>
+              <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple">
+                <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
+                <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
+                <div class="book-meta">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
 
-  <div class="section-block">
-    <h2 class="section-title">Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
-    <div class="book-grid">
-      <?php foreach ($trending as $t): ?>
-        <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow">
-          <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
-          <?php if (!empty($t['CALL NUMBER'])): ?><div> <?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
-          <div class="book-meta">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </div>
-
-  <?php if (!empty($otherWorks)): ?>
+    <!-- Top Trending Books -->
     <div class="section-block">
-      <h2 class="section-title">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
-      <div class="book-grid">
-        <?php foreach ($otherWorks as $w): ?>
-          <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple">
-            <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
-            <?php if (!empty($w['CALL NUMBER'])): ?><div> <?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
-            <div class="book-meta">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+      <h2 class="section-title">Top Trending Books</h2>
+      <div class="book-grid top-trending">
+        <?php
+        $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
+        foreach ($stmt as $b): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange">
+            <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
+            <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+            <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
           </a>
         <?php endforeach; ?>
       </div>
     </div>
-  <?php endif; ?>
-<?php endif; ?>
+  </aside>
 
-<div class="section-block">
-  <h2 class="section-title">Top Trending Books</h2>
-  <div class="book-grid top-trending">
-    <?php
-    $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
-    foreach ($stmt as $b): ?>
-      <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange">
-        <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
-        <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-        <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-      </a>
-    <?php endforeach; ?>
-  </div>
-</div>
+  <!-- RIGHT Sidebar (Aside) -->
+  <div class="w-full md:w-1/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+    <?php if (isset($_SESSION['user_id'])): ?>
+      <section class="aside-box" id="liked-section">
+        <h3 class="aside-title">👍 Your Likes</h3>
+        <?php if (empty($likedBooks)): ?>
+          <p class="aside-empty">You haven't liked any books yet.</p>
+        <?php else: ?>
+          <?php foreach ($likedBooks as $b): ?>
+            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
+              <div class="aside-entry">
+                <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'default.jpg') ?>" class="aside-image" alt="Book cover">
+                <div>
+                  <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+                  <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+                  <div class="aside-meta">Likes: <?= $b['Like'] ?></div>
+                </div>
+              </div>
+            </a>
+          <?php endforeach; ?>
+          <div class="aside-pagination" id="like-pagination">
+            <?php for ($i = 1; $i <= $totalLikePages; $i++): ?>
+              <a href="?like_page=<?= $i ?>" class="page-btn <?= $i === $likePage ? 'active' : '' ?>"> <?= $i ?> </a>
+            <?php endfor; ?>
+          </div>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
 
-        <aside class="aside-section">
-  <?php if (isset($_SESSION['user_id'])): ?>
-    <section class="aside-box" id="liked-section">
-      <h3 class="aside-title">👍 Your Likes</h3>
-      <?php if (empty($likedBooks)): ?>
-        <p class="aside-empty">You haven't liked any books yet.</p>
+    <!-- Recommended -->
+    <section class="aside-box" id="recommended-section">
+      <h3 class="aside-title">🎓 Recommended for Your Field</h3>
+      <?php if (empty($recommendedBooks)): ?>
+        <p class="aside-empty">No recommendations available for your field.</p>
       <?php else: ?>
-        <?php foreach ($likedBooks as $b): ?>
+        <?php foreach ($recommendedBooks as $b): ?>
           <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
             <div class="aside-entry">
               <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'default.jpg') ?>" class="aside-image" alt="Book cover">
               <div>
                 <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-                <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-                <div class="aside-meta">Likes: <?= $b['Like'] ?></div>
+                <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
+                <div class="aside-meta">Category: <?= htmlspecialchars($b['General_Category']) ?></div>
               </div>
             </div>
           </a>
         <?php endforeach; ?>
-        <div class="aside-pagination" id="like-pagination">
-          <?php for ($i = 1; $i <= $totalLikePages; $i++): ?>
-            <a href="?like_page=<?= $i ?>" class="page-btn <?= $i === $likePage ? 'active' : '' ?>"> <?= $i ?> </a>
+      <?php endif; ?>
+    </section>
+
+    <!-- Commented -->
+    <section class="aside-box" id="commented-section">
+      <h3 class="aside-title">💬 Top Commented Books</h3>
+      <?php if (empty($topCommented)): ?>
+        <p class="aside-empty">No books have comments yet.</p>
+      <?php else: ?>
+        <?php foreach ($topCommented as $b): ?>
+          <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
+            <div class="aside-entry">
+              <img src="default.jpg" class="aside-image" alt="Book cover">
+              <div>
+                <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+                <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
+                <div class="aside-meta">💬 <?= $b['comment_count'] ?> comment<?= $b['comment_count'] == 1 ? '' : 's' ?></div>
+              </div>
+            </div>
+          </a>
+        <?php endforeach; ?>
+        <div class="aside-pagination" id="comment-pagination">
+          <?php for ($i = 1; $i <= $totalCommentedPages; $i++): ?>
+            <a href="?commented_page=<?= $i ?>" class="page-btn <?= $i === $commentedPage ? 'active' : '' ?>"> <?= $i ?> </a>
           <?php endfor; ?>
         </div>
       <?php endif; ?>
     </section>
-  <?php endif; ?>
 
-  <section class="aside-box" id="recommended-section">
-    <h3 class="aside-title">🎓 Recommended for Your Field</h3>
-    <?php if (empty($recommendedBooks)): ?>
-      <p class="aside-empty">No recommendations available for your field.</p>
-    <?php else: ?>
-      <?php foreach ($recommendedBooks as $b): ?>
-        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
-          <div class="aside-entry">
-            <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'default.jpg') ?>" class="aside-image" alt="Book cover">
-            <div>
-              <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-              <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
-              <div class="aside-meta">Category: <?= htmlspecialchars($b['General_Category']) ?></div>
-            </div>
-          </div>
-        </a>
-      <?php endforeach; ?>
-    <?php endif; ?>
-  </section>
+    <!-- Info Boxes -->
+    <section class="info-box">
+      <h3 class="info-title">External Resources</h3>
+      <ul class="info-list">
+        <li><a href="#" class="info-link">Online Journals</a></li>
+        <li><a href="#" class="info-link">Educational Databases</a></li>
+        <li><a href="#" class="info-link">E-book Platforms</a></li>
+      </ul>
+    </section>
 
-  <section class="aside-box" id="commented-section">
-    <h3 class="aside-title">💬 Top Commented Books</h3>
-    <?php if (empty($topCommented)): ?>
-      <p class="aside-empty">No books have comments yet.</p>
-    <?php else: ?>
-      <?php foreach ($topCommented as $b): ?>
-        <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
-          <div class="aside-entry">
-            <img src="default.jpg" class="aside-image" alt="Book cover">
-            <div>
-              <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-              <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
-              <div class="aside-meta">💬 <?= $b['comment_count'] ?> comment<?= $b['comment_count'] == 1 ? '' : 's' ?></div>
-            </div>
-          </div>
-        </a>
-      <?php endforeach; ?>
-      <div class="aside-pagination" id="comment-pagination">
-        <?php for ($i = 1; $i <= $totalCommentedPages; $i++): ?>
-          <a href="?commented_page=<?= $i ?>" class="page-btn <?= $i === $commentedPage ? 'active' : '' ?>"> <?= $i ?> </a>
-        <?php endfor; ?>
-      </div>
-    <?php endif; ?>
-  </section>
-</aside>
+    <section class="info-box">
+      <h3 class="info-title">Library Guidelines</h3>
+      <ul class="info-list">
+        <li>Maintain silence.</li>
+        <li>Handle books with care.</li>
+        <li>Return books on time.</li>
+        <li>No food or drinks allowed.</li>
+        <li>Respect fellow readers.</li>
+      </ul>
+    </section>
+  </div>
+</div>
 
-            <section class="info-box">
-  <h3 class="info-title">External Resources</h3>
-  <ul class="info-list">
-    <li><a href="#" class="info-link">Online Journals</a></li>
-    <li><a href="#" class="info-link">Educational Databases</a></li>
-    <li><a href="#" class="info-link">E-book Platforms</a></li>
-  </ul>
-</section>
 
-<section class="info-box">
-  <h3 class="info-title">Library Guidelines</h3>
-  <ul class="info-list">
-    <li>Maintain silence.</li>
-    <li>Handle books with care.</li>
-    <li>Return books on time.</li>
-    <li>No food or drinks allowed.</li>
-    <li>Respect fellow readers.</li>
-  </ul>
-</section>
+       
 
-        </aside>
-    </div>
 
-    <div class="google-map-container text-center mt-8 space-y-3">
+      <section class="google-map">
+      <div class="google-map-container">
     <h2 class="section-title">Visit Us!</h2>
     <div class="map-wrapper">
-            <iframe
-            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph"
-            class="map-frame"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
-        </div>
-    </div>
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph"
+        class="map-frame"
+        allowfullscreen=""
+        loading="lazy">
+      </iframe>
+  </div>
+  </section>
 </div>
+  
 <script src="css/comment.js"></script>
+<script src="css/login.js"></script>
 <!-- cute ang pokdakodasok -->
 </body>
 </html>
