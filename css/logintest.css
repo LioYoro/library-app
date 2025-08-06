@@ -258,3 +258,16 @@ header {
 .login-register p a:hover {
     text-decoration: underline;
 }
+
+/* Show login form when popup is active and register is not */
+.wrapper.active-popup .form-box.login {
+  display: block;
+}
+
+.wrapper.active-popup.active .form-box.login {
+  display: none;
+}
+
+.wrapper.active-popup.active .form-box.register {
+  display: block;
+}

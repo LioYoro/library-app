@@ -1,0 +1,21 @@
+<?php 
+$pageTitle = 'Dashboard';
+include('includes/header.php'); 
+include('includes/sidebar.php');
+?>
+
+<div id="main-content" class="flex-1 flex flex-col min-w-0 ml-[15rem] h-screen transition-all duration-300">
+  <header class="h-16 bg-blue-500 text-white flex items-center justify-between px-6 shadow">
+    <h1 class="text-xl font-bold"><?= $pageTitle ?></h1>
+    <div class="flex items-center space-x-3">
+      <span class="text-sm">ADMIN</span>
+      <i class="fas fa-user-circle text-2xl"></i>
+    </div>
+  </header>
+
+  <main class="flex-1 p-6 bg-white overflow-y-auto">
+    <p>This is the Dashboard Overview.</p>
+  </main>
+</div>
+
+<?php include('includes/footer.php'); ?>
