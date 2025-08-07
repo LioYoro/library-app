@@ -1,7 +1,6 @@
 <?php
 session_start(); // IMPORTANT: this must be at the top
-
-require '../includes/db.php';
+require '../includes/db.php';  // Go up one level to find includes folder
 require_once '../includes/PHPMailer/src/PHPMailer.php';
 require_once '../includes/PHPMailer/src/SMTP.php';
 require_once '../includes/PHPMailer/src/Exception.php';
@@ -9,18 +8,44 @@ require_once '../includes/PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Store submitted registration data in session (first time)
+// Store submitted registration data in session
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $_SESSION['registration']['is_mandaluyong_resident'] = $_POST['is_mandaluyong_resident'] ?? '';
-    $_SESSION['registration']['barangay'] = $_POST['barangay'] ?? '';
-    $_SESSION['registration']['city_outside_mandaluyong'] = $_POST['city_outside_mandaluyong'] ?? '';
+    $_SESSION['registration'] = [
+        'first_name' => $_POST['first_name'] ?? '',
+        'last_name' => $_POST['last_name'] ?? '',
+        'email' => $_POST['email'] ?? '',
+        'contact_number' => $_POST['contact_number'] ?? '',
+        'password' => $_POST['password'] ?? '',
+        'gender' => $_POST['gender'] ?? '',
+        'age' => $_POST['age'] ?? '',
+        'religion' => $_POST['religion'] ?? '',
+        'is_mandaluyong_resident' => $_POST['is_mandaluyong_resident'] ?? '',
+        'barangay' => $_POST['barangay'] ?? '',
+        'city_outside_mandaluyong' => $_POST['city_outside_mandaluyong'] ?? '',
+        'education_level' => $_POST['education_level'] ?? '',
+        'major' => $_POST['major'] ?? '',
+        'strand' => $_POST['strand'] ?? '',
+        'school_name' => $_POST['school_name'] ?? ''
+    ];
 }
 
-
 $email = $_SESSION['registration']['email'] ?? null;
-
 if (!$email) {
-    die("No email provided.");
+    echo "No email provided.";
+    exit();
+}
+
+// Check if email already exists
+try {
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
+    $stmt->execute([':email' => $email]);
+    if ($stmt->fetch()) {
+        echo "Email already registered. Please use a different email.";
+        exit();
+    }
+} catch (PDOException $e) {
+    echo "Database error: " . $e->getMessage();
+    exit();
 }
 
 $otp = rand(100000, 999999);
@@ -36,18 +61,14 @@ $mail->Username = 'hextech.abcy@gmail.com';
 $mail->Password = 'brgm uejx knoj upsi'; // Make sure this is your actual app password
 $mail->SMTPSecure = 'tls';
 $mail->Port = 587;
-
 $mail->setFrom('hextech.abcy@gmail.com', 'Library Registration');
 $mail->addAddress($email);
 $mail->Subject = 'Your OTP Code';
-$mail->Body    = "Your OTP code is: $otp\n\nValid for 5 minutes only.";
+$mail->Body = "Your OTP code is: $otp\n\nValid for 5 minutes only.";
 
 if (!$mail->send()) {
-    echo 'Message could not be sent.';
-    echo 'Mailer Error: ' . $mail->ErrorInfo;
+    echo 'Message could not be sent. Mailer Error: ' . $mail->ErrorInfo;
 } else {
-    // Redirect to OTP verification page
-    header("Location: verify_otp.php");
-    exit;
+    echo 'success';
 }
 ?>

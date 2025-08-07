@@ -1,36 +1,35 @@
-<form id="searchForm" method="get" class="flex flex-wrap gap-2 items-center mb-4 w-full">
-  <!-- Search Bar -->
-  <div class="flex items-center border border-black rounded-md flex-grow max-w-full">
-    <button type="button" class="px-2 text-lg text-black">
-      <i class="fas fa-filter"></i>
+<div class="search-container">
+  <form id="searchForm" method="get">
+    <!-- Search Input Group -->
+    <div class="search-input-group">
+      <button type="button">
+        <i class="fas fa-filter"></i>
+      </button>
+      <input 
+        type="text"
+        name="search"
+        placeholder="Search by title or summary..."
+        value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+      />
+      <button id="standardSearchBtn" type="submit">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+    
+    <!-- Action Buttons -->
+    <button type="button" class="search-btn">
+      ASK <span style="font-size: 10px;">✦</span>
     </button>
-    <input 
-      type="text" 
-      name="search" 
-      placeholder="Search by title or summary..." 
-      value="<?= htmlspecialchars($_GET['search'] ?? '') ?>" 
-      class="flex-grow px-2 py-1 text-sm outline-none" 
-    />
-    <button id="standardSearchBtn" type="submit" class="px-3 text-lg text-black">
-      <i class="fas fa-search"></i>
+    
+    <button id="advancedSearchBtn" type="button" class="search-btn">
+      ADVANCED SEARCH
     </button>
-  </div>
-
-  <!-- ASK (still static) -->
-  <button type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none flex items-center gap-1">
-    ASK <span class="text-xs -mb-1">✦</span>
-  </button>
-
-  <!-- ADVANCED SEARCH (handled via JS) -->
-  <button id="advancedSearchBtn" type="button" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none">
-    ADVANCED SEARCH
-  </button>
-
-  <!-- RECENT/FAVORITE -->
-  <a href="views/favorites.php" class="border border-black rounded-md px-3 py-1 text-xs font-normal select-none flex items-center gap-1">
-  ❤️ BOOKMARKS
-</a>
-</form>
+    
+    <a href="views/favorites.php" class="search-btn">
+      ❤️ BOOKMARKS
+    </a>
+  </form>
+</div>
 
 <script>
   const form = document.getElementById('searchForm');
@@ -39,7 +38,8 @@
   const advancedBtn = document.getElementById('advancedSearchBtn');
 
   // Standard search: submit to book_results.php
-  standardBtn.addEventListener('click', function () {
+  standardBtn.addEventListener('click', function (e) {
+    e.preventDefault();
     const value = input.value.trim();
     if (value) {
       form.action = "views/book_results.php";
@@ -52,28 +52,30 @@
   advancedBtn.addEventListener('click', function () {
     const value = input.value.trim();
     if (value) {
-      form.action = "ask.php";
-      form.method = "post";
-
-      // Convert the input into a POST field
-      const hidden = document.createElement("input");
-      hidden.type = "hidden";
-      hidden.name = "question";
-      hidden.value = value;
-      form.appendChild(hidden);
-
-      form.submit();
+      // Create a temporary form for POST request
+      const tempForm = document.createElement('form');
+      tempForm.method = 'post';
+      tempForm.action = 'ask.php';
+      
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'question';
+      hiddenInput.value = value;
+      
+      tempForm.appendChild(hiddenInput);
+      document.body.appendChild(tempForm);
+      tempForm.submit();
     }
   });
 
-  // Handle Enter key manually to use standard search
+  // Handle Enter key for standard search
   form.addEventListener("submit", function (e) {
+    e.preventDefault();
     const value = input.value.trim();
-    if (!value) {
-      e.preventDefault(); // prevent if empty
-    } else {
+    if (value) {
       form.action = "views/book_results.php";
       form.method = "get";
+      form.submit();
     }
   });
 </script>

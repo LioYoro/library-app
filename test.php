@@ -1,5 +1,3 @@
- <!-- This will include the header -->
-
 <?php
 
 if (session_status() == PHP_SESSION_NONE) {
@@ -113,7 +111,6 @@ if (isset($_SESSION['user_id'])) {
 
 
 ?>
-<!-- <?php //include 'include/headertest.php'; ?> This will include the header -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,11 +127,11 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
 
-   <?php include 'include/headertest.php'; ?> 
+   <?php include 'includes/headertest.php'; ?> 
 <body style="margin: 0; padding-top: 80px; font-family: sans-serif;">
 
 
-<?php include 'include/logintest.php'; ?> <!-- This will include the login popup -->
+<?php include 'login/logintest.php'; ?> <!-- This will include the login popup -->
 
 <div class="max-w-[1200px] mx-auto px-4 md:px-6 py-4 space-y-6">
 
@@ -142,6 +139,24 @@ if (isset($_SESSION['user_id'])) {
         <h1 class="text-2xl font-bold">Welcome to Kaban ng Hiyas Congressional Library</h1>
         <p class="text-gray-600">Explore academic knowledge, discover resources, and ask questions.</p>
     </div>
+
+    <div style="margin-top: 20px;">
+    <form action="admin/index.php" method="get">
+        <button type="submit" style="padding: 10px 20px; background-color: #1d4ed8; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Go to Admin Panel
+        </button>
+    </form>
+</div>
+
+<div style="margin-top: 20px;">
+    <form action="index.php" method="get">
+        <button type="submit" style="padding: 10px 20px; background-color: #1d4ed8; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Go to Old Home
+        </button>
+    </form>
+</div>
+
+
 
     <section class="custom-slider-section">
   <div class="volume-icon">
@@ -365,8 +380,8 @@ if (isset($_SESSION['user_id'])) {
   </section>
 </div>
   
-<script src="css/comment.js"></script>
-<script src="css/login.js"></script>
+<script src="js/comment.js"></script>
+<script src="js/login.js"></script>
 <!-- cute ang pokdakodasok -->
 </body>
 </html>

@@ -14,4 +14,3 @@ if (!$book) {
 $title = $book[1]; // Assuming column 1 is the title
 header("Location: views/book_detail.php?title=" . urlencode($title));
 exit;
-

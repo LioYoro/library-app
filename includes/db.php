@@ -1,12 +1,11 @@
 <?php
 $host = 'localhost';
-$dbname = 'library_test_db'; // ← replace with your actual DB name
+$dbname = 'library_test_db';
 $username = 'root';
-$password = ''; // default for XAMPP
+$password = '';
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    // Enable error mode
+    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());

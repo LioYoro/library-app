@@ -13,14 +13,14 @@ $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) die("User  not found.");
+if (!$user) die("User not found.");
 ?>
 
 <?php include '../views/header.php'; ?>
 
 <div class="max-w-4xl mx-auto px-6 py-10 bg-white border border-gray-300 rounded-lg shadow-md mt-8">
   <h2 class="text-center text-2xl font-bold mb-8">Edit Your Profile</h2>
-
+  
   <form id="profileForm" method="post" enctype="multipart/form-data">
     <!-- Profile Picture -->
     <div class="col-span-2 flex items-center gap-6 mb-8">
@@ -36,16 +36,14 @@ if (!$user) die("User  not found.");
           alt="Profile Picture"
           class="object-cover w-full h-full">
       </div>
-
+      
       <!-- Upload Input -->
       <div>
         <label for="profile_picture" class="block text-sm font-medium mb-1">Upload New Picture</label>
         <input type="file" name="profile_picture" id="profile_picture" accept="image/*" class="block text-sm mb-1">
         <p class="text-xs text-gray-500 mb-2">JPEG or PNG up to 2MB.</p>
-
         <!-- Hidden input to signal removal -->
         <input type="hidden" name="remove_picture" id="remove_picture" value="0">
-
         <!-- Remove button (moved below) -->
         <button type="button"
           id="removeImageBtn"
@@ -59,32 +57,32 @@ if (!$user) die("User  not found.");
       <!-- Left Column: Primary Info -->
       <div class="space-y-4">
         <h3 class="text-lg font-semibold mb-4">📌 Primary Information</h3>
-
+        
         <div>
           <label class="block font-medium mb-1">First Name</label>
           <input type="text" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">Last Name</label>
           <input type="text" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">Contact Number</label>
           <input type="text" name="contact_number" value="<?= htmlspecialchars($user['contact_number']) ?>" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">Email</label>
           <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">New Password (Leave blank if no change)</label>
           <input type="password" name="password" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">Gender</label>
           <select name="gender" class="w-full border px-3 py-2 rounded">
@@ -92,12 +90,12 @@ if (!$user) die("User  not found.");
             <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
           </select>
         </div>
-
+        
         <div>
           <label class="block font-medium mb-1">Age</label>
           <input type="number" name="age" value="<?= htmlspecialchars($user['age']) ?>" class="w-full border px-3 py-2 rounded">
         </div>
-
+        
         <div>
           <label for="religion" class="block font-medium mb-1">Relihiyon</label>
           <select name="religion" id="religion" class="w-full border px-3 py-2 rounded" required>
@@ -124,17 +122,18 @@ if (!$user) die("User  not found.");
       <div class="space-y-6">
         <div class="space-y-4">
           <h3 class="text-lg font-semibold mb-4">🏠 Secondary Information</h3>
-
+          
           <div>
             <label class="block font-medium mb-1">Are you a Mandaluyong resident?</label>
-            <select name="is_mandaluyong_resident" class="w-full border px-3 py-2 rounded">
+            <select name="is_mandaluyong_resident" id="is_mandaluyong_resident" class="w-full border px-3 py-2 rounded" onchange="toggleResidencyFields(this.value)">
               <option value="">-- Select --</option>
               <option value="yes" <?= $user['is_mandaluyong_resident'] === 'yes' ? 'selected' : '' ?>>Yes</option>
               <option value="no" <?= $user['is_mandaluyong_resident'] === 'no' ? 'selected' : '' ?>>No</option>
             </select>
           </div>
-
-          <div>
+          
+          <!-- Barangay field - show only if Mandaluyong resident -->
+          <div id="barangayField" class="<?= $user['is_mandaluyong_resident'] === 'yes' ? '' : 'hidden' ?>">
             <label class="block font-medium mb-1" for="barangay">Barangay</label>
             <select name="barangay" id="barangay" class="w-full border px-3 py-2 rounded">
               <option value="">--Pumili--</option>
@@ -155,8 +154,9 @@ if (!$user) die("User  not found.");
               ?>
             </select>
           </div>
-
-          <div>
+          
+          <!-- City outside Mandaluyong field - show only if NOT Mandaluyong resident -->
+          <div id="cityField" class="<?= $user['is_mandaluyong_resident'] === 'no' ? '' : 'hidden' ?>">
             <label class="block font-medium mb-1">City Outside Mandaluyong</label>
             <input type="text" name="city_outside_mandaluyong" value="<?= htmlspecialchars($user['city_outside_mandaluyong']) ?>" class="w-full border px-3 py-2 rounded">
           </div>
@@ -165,7 +165,7 @@ if (!$user) die("User  not found.");
         <!-- College and SHS Dropdowns -->
         <div class="space-y-4 pt-4 border-t border-gray-300">
           <h3 class="text-lg font-semibold mb-4">🎓 Education Information</h3>
-
+          
           <div>
             <label class="block font-medium mb-1">Education Level</label>
             <select name="education_level" class="w-full border px-3 py-2 rounded" onchange="toggleEducationDropdowns(this.value)">
@@ -175,7 +175,7 @@ if (!$user) die("User  not found.");
               <option value="College" <?= $user['education_level'] === 'College' ? 'selected' : '' ?>>Kolehiyo</option>
             </select>
           </div>
-
+          
           <!-- College -->
           <div id="collegeDropdown" class="<?= $user['education_level'] === 'College' ? '' : 'hidden' ?>">
               <label class="block font-medium mb-1" for="major">Kurso sa Kolehiyo</label>
@@ -225,7 +225,7 @@ if (!$user) die("User  not found.");
                   <option value="BTVTED Garments, Fashion and Design">
               </datalist>
           </div>
-
+          
           <!-- SHS -->
           <div id="shsDropdown" class="<?= $user['education_level'] === 'SHS' ? '' : 'hidden' ?>">
               <label class="block font-medium mb-1" for="strand">Strand sa SHS</label>
@@ -240,7 +240,7 @@ if (!$user) die("User  not found.");
                   <option value="Sports Track" <?= $user['strand'] === 'Sports Track' ? 'selected' : '' ?>>Sports Track</option>
               </select>
           </div>
-
+          
           <div>
             <label class="block font-medium mb-1">School Name</label>
             <input type="text" name="school_name" value="<?= htmlspecialchars($user['school_name']) ?>" class="w-full border px-3 py-2 rounded">
@@ -262,16 +262,38 @@ if (!$user) die("User  not found.");
 </div>
 
 <script>
+// Function to toggle residency fields
+function toggleResidencyFields(value) {
+  const barangayField = document.getElementById('barangayField');
+  const cityField = document.getElementById('cityField');
+  
+  // Hide both fields first
+  barangayField.classList.add('hidden');
+  cityField.classList.add('hidden');
+  
+  // Show appropriate field based on selection
+  if (value === 'yes') {
+    barangayField.classList.remove('hidden');
+  } else if (value === 'no') {
+    cityField.classList.remove('hidden');
+  }
+}
+
+// Function to toggle education dropdowns
 function toggleEducationDropdowns(level) {
   document.getElementById('collegeDropdown').classList.add('hidden');
   document.getElementById('shsDropdown').classList.add('hidden');
+  
   if (level === 'College') {
     document.getElementById('collegeDropdown').classList.remove('hidden');
   } else if (level === 'SHS') {
     document.getElementById('shsDropdown').classList.remove('hidden');
   }
 }
+
+// Initialize the fields on page load
 toggleEducationDropdowns("<?= $user['education_level'] ?>");
+toggleResidencyFields("<?= $user['is_mandaluyong_resident'] ?>");
 </script>
 
 <script>
@@ -310,7 +332,6 @@ function showFormMessage(message, color = "text-red-600") {
   formAlert.textContent = message;
   formAlert.classList.remove("hidden", "text-red-600", "text-green-600");
   formAlert.classList.add(color);
-
   setTimeout(() => {
     formAlert.classList.add("hidden");
   }, 5000);
@@ -319,22 +340,22 @@ function showFormMessage(message, color = "text-red-600") {
 // On Confirm Changes
 profileForm.addEventListener("submit", async function (e) {
   e.preventDefault();
-
+  
   if (!formHasChanges()) {
     showFormMessage("⚠️ No changes detected.");
     return;
   }
-
-  const formData = new FormData(profileForm);
   
+  const formData = new FormData(profileForm);
+    
   try {
     const response = await fetch("save_changes.php", {
       method: "POST",
       body: formData
     });
-    
+        
     const result = await response.text();
-    
+        
     if (result.includes("successfully")) {
       showFormMessage("✅ Profile updated successfully!", "text-green-600");
       setTimeout(() => {
@@ -353,7 +374,6 @@ profileForm.addEventListener("submit", async function (e) {
 document.querySelector('#profile_picture').addEventListener('change', function (e) {
   const file = e.target.files[0];
   const previewImg = document.getElementById('profilePreview');
-
   if (file) {
     previewImg.src = URL.createObjectURL(file);
   } else {
@@ -367,7 +387,6 @@ const profilePictureInput = document.getElementById('profile_picture');
 const profilePreview = document.getElementById('profilePreview');
 const removeBtn = document.getElementById('removeImageBtn');
 const removeInput = document.getElementById('remove_picture');
-
 const defaultImage = '/library-app/uploads/default_pp.jpg';
 
 profilePictureInput.addEventListener('change', function (e) {

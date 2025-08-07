@@ -3,13 +3,17 @@ import pandas as pd
 from flask import Flask, request, jsonify, redirect
 from sentence_transformers import util
 from recommender import Recommender
+import logging
+
+# Add this near the top after your imports
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 # ── 1.  Paths ────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "data")
-
 csv_path = os.path.join(DATA_DIR, "LIBRARY_DATA_FINAL_clean.csv")
 emb_path = os.path.join(DATA_DIR, "corpus_embeddings.pkl")
 
@@ -20,7 +24,6 @@ with open(emb_path, "rb") as f:
 
 # Initialize the recommender instance
 recommender = Recommender(df, corpus_embeddings)
-
 titles = df["TITLE"].fillna("").tolist()
 
 # Helper to clean NaN
@@ -52,14 +55,13 @@ def api_chat():
     question = (data or {}).get("question", "").strip()
     if not question:
         return jsonify({"error": "missing question"}), 400
-    
+        
     try:
         res = bot_ask(question)
         print("Bot response:", res)  # Debug print
     except Exception as e:
         print("Error in bot_ask:", e)
         return jsonify({"error": "Internal error"}), 500
-
     return jsonify(res)
 
 # ── 3.  /api/recommend ───────────────────────────────────────────
@@ -68,7 +70,7 @@ def api_recommend():
     # accept either ?id= or ?title=
     if "title" in request.args and "id" not in request.args:
         q = request.args["title"].strip().lower()
-        hits = df.index[df["TITLE"].str.lower() == q].tolist()          # exact
+        hits = df.index[df["TITLE"].str.lower() == q].tolist()  # exact
         if not hits:
             hits = df.index[df["TITLE"].str.lower().str.contains(q)].tolist()  # substring
         if not hits:
@@ -90,7 +92,6 @@ def api_recommend():
     res = recommender.recommend(seed_idx)
     seed_vec = recommender.emb[seed_idx]
     seed_row = df.loc[seed_idx]
-
     ser = lambda idx_list: [serialize_row(i, seed_vec) for i in idx_list]
 
     return jsonify({
@@ -144,7 +145,6 @@ def api_recommend_post():
 
     return jsonify({"recommended": related_books})
 
-
 # Add this mapping at the top of app.py after the imports
 MAJOR_CATEGORY_MAP = {
     "AB Political Science": ["Politics", "History", "Social Science"],
@@ -169,17 +169,22 @@ STRAND_CATEGORY_MAP = {
     "Arts and Design": ["Art & Media"]
 }
 
-
-import math # Make sure to import math at the top of your app.py if it's not already there
-
 @app.route('/recommend_by_field', methods=['POST'])
 def recommend_by_field():
     import mysql.connector
     data = request.json
     user_id = data.get('user_id')
-
+    
+    # Change from:
+    # print(f"DEBUG: Received request for user_id: {user_id}")
+    # print(f"DEBUG: Full request data: {data}")
+    # To:
+    logger.info(f"Recommendation request for user_id: {user_id}")
+    logger.debug(f"Full request data: {data}")
+    
     if not user_id:
-        return jsonify([])
+        print("DEBUG: No user_id provided")
+        return jsonify({"recommendations": []})
 
     try:
         # Connect to your MySQL DB
@@ -196,42 +201,60 @@ def recommend_by_field():
         conn.close()
 
         if not user:
-            return jsonify({"recommendations": []}) # Return empty list in "recommendations" key
-
-        edu_level = user['education_level'].lower()
-        field = user['major'] if edu_level == "kolehiyo" else user['strand']
-
-        if edu_level == "kolehiyo":
-            categories = MAJOR_CATEGORY_MAP.get(field, [])
-        else:
-            categories = STRAND_CATEGORY_MAP.get(field, [])
-
-        print("User field (strand or major):", field)
-        print("Matched categories:", categories)
-
-        if not categories:
-            return jsonify({"recommendations": []}) # Return empty list in "recommendations" key
-
-        # Recommend based on matched categories
-        # Ensure df is accessible here (e.g., loaded globally or passed)
-        if 'df' not in globals():
-            # This is a placeholder. In a real app, df should be loaded once.
-            # Example: df = pd.read_csv('your_books_data.csv') or loaded from DB
-            # For now, assume df is available from a broader scope.
-            print("Warning: 'df' (DataFrame) not found. Recommendations will fail.")
+            print(f"DEBUG: User {user_id} not found in database")
             return jsonify({"recommendations": []})
 
+        # Change from:
+        # print(f"DEBUG: User data from DB: {user}")
+        # print(f"DEBUG: Education level: {edu_level}")
+        # print(f"DEBUG: Field (major/strand): {field}")
+        # print(f"DEBUG: Mapped categories: {categories}")
+        # To:
+        edu_level = user['education_level'].lower()
+        field = user['major'] if edu_level == "college" else user['strand']
+        categories = MAJOR_CATEGORY_MAP.get(field, []) if edu_level == "college" else STRAND_CATEGORY_MAP.get(field, [])
+        logger.info(f"User: {edu_level} - {field} -> categories: {categories}")
 
-        # Handle cases where 'General_Category' might be missing or not a string
-        filtered_books = df[df['General_Category'].astype(str).str.contains('|'.join(categories), na=False)]
+        if not categories:
+            print(f"DEBUG: No categories found for field: {field}")
+            return jsonify({"recommendations": []})
 
+        # FIX 3: Make sure df is accessible (it should be from global scope)
+        if 'df' not in globals():
+            print("ERROR: DataFrame 'df' not found in global scope")
+            return jsonify({"recommendations": []})
+
+        print(f"DEBUG: DataFrame shape: {df.shape}")
+        print(f"DEBUG: DataFrame columns: {df.columns.tolist()}")
+
+        # FIX 4: Debug the filtering process
+        print(f"DEBUG: Looking for books with categories containing: {categories}")
+        category_pattern = '|'.join(categories)
+        print(f"DEBUG: Category pattern: {category_pattern}")
+        
+        # Check what categories exist in the dataframe
+        unique_categories = df['General_Category'].unique()
+        print(f"DEBUG: Unique categories in DataFrame: {unique_categories}")
+        
+        # Filter the DataFrame based on the categories
+        filtered_books = df[df['General_Category'].astype(str).str.contains(category_pattern, na=False)]
+        print(f"DEBUG: Filtered books count: {len(filtered_books)}")
+        
+        if len(filtered_books) == 0:
+            print("DEBUG: No books found after filtering")
+            # Let's check if there are exact matches
+            exact_matches = df[df['General_Category'].isin(categories)]
+            print(f"DEBUG: Exact category matches: {len(exact_matches)}")
+            if len(exact_matches) > 0:
+                filtered_books = exact_matches
 
         recommendedBooks = filtered_books[['TITLE', 'AUTHOR', 'General_Category', 'Sub_Category', 'Like']] \
             .sort_values(by='Like', ascending=False) \
             .head(5) \
             .to_dict(orient='records')
 
-        # --- START OF NaN HANDLING FIX ---
+        print(f"DEBUG: Recommended books before cleaning: {recommendedBooks}")
+
         # Process recommendedBooks to replace NaN with None for JSON compatibility
         cleaned_recommended_books = []
         for book in recommendedBooks:
@@ -243,16 +266,20 @@ def recommend_by_field():
                 else:
                     cleaned_book[key] = value
             cleaned_recommended_books.append(cleaned_book)
-        # --- END OF NaN HANDLING FIX ---
 
-        print("Final recommendations (cleaned):", cleaned_recommended_books)
+        # Change from:
+        # print(f"DEBUG: Final recommendations (cleaned): {cleaned_recommended_books}")
+        # To:
+        logger.info(f"Returning {len(cleaned_recommended_books)} recommendations for user {user_id}")
+        logger.debug(f"Recommendations: {cleaned_recommended_books}")
         return jsonify({"recommendations": cleaned_recommended_books})
 
     except Exception as e:
-        print("Error in recommend_by_field:", e)
-        # It's better to return an empty list in the "recommendations" key on error too
+        # Keep error logging:
+        logger.error(f"Error in recommend_by_field: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"recommendations": []})
-
 
 # ── 4.  Root → redirect to PHP UI ───────────────────────────────
 @app.route("/")

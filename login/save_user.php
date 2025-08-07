@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../includes/db.php';
+require '../includes/db.php';  // Go up one level to find includes folder
 
 // Check if email was verified via OTP
 if (
@@ -8,11 +8,13 @@ if (
     !isset($_SESSION['registration']['email_verified']) || 
     $_SESSION['registration']['email_verified'] !== true
 ) {
-    die("Email verification required.");
+    echo "Email verification required.";
+    exit();
 }
 
 $data = $_SESSION['registration'];
 
+// Set default values for optional fields
 $data['education_level'] = $data['education_level'] ?? '';
 $data['major'] = $data['major'] ?? '';
 $data['strand'] = $data['strand'] ?? '';
@@ -24,49 +26,46 @@ $data['contact_number'] = $data['contact_number'] ?? null;
 
 $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
-$stmt = $conn->prepare("INSERT INTO users (
-    first_name, last_name, email, password, gender, age, religion,
-    education_level, major, strand, school_name,
-    is_mandaluyong_resident, barangay, city_outside_mandaluyong,
-    contact_number, profile_picture,
-    email_verified, role, created_at
-) VALUES (
-    :first_name, :last_name, :email, :password, :gender, :age, :religion,
-    :education_level, :major, :strand, :school_name,
-    :is_mandaluyong_resident, :barangay, :city_outside_mandaluyong,
-    :contact_number, :profile_picture,
-    1, :role, NOW()
-)");
-
-
+try {
+    $stmt = $conn->prepare("INSERT INTO users (
+        first_name, last_name, email, password, gender, age, religion,
+        education_level, major, strand, school_name,
+        is_mandaluyong_resident, barangay, city_outside_mandaluyong,
+        contact_number, profile_picture,
+        email_verified, role, created_at
+    ) VALUES (
+        :first_name, :last_name, :email, :password, :gender, :age, :religion,
+        :education_level, :major, :strand, :school_name,
+        :is_mandaluyong_resident, :barangay, :city_outside_mandaluyong,
+        :contact_number, :profile_picture,
+        1, :role, NOW()
+    )");
+    
     $stmt->execute([
-    ':first_name' => $data['first_name'],
-    ':last_name' => $data['last_name'],
-    ':email' => $data['email'],
-    ':password' => $hashedPassword,
-    ':gender' => $data['gender'],
-    ':age' => $data['age'],
-    ':religion' => $data['religion'],
-    ':education_level' => $data['education_level'],
-    ':major' => $data['education_level'] === 'College' ? $data['major'] : null,
-    ':strand' => $data['education_level'] === 'SHS' ? $data['strand'] : null,
-    ':school_name' => $data['school_name'],
-    ':is_mandaluyong_resident' => $data['is_mandaluyong_resident'],
-    ':barangay' => $data['barangay'],
-    ':city_outside_mandaluyong' => $data['city_outside_mandaluyong'],
-    ':contact_number' => $data['contact_number'],
-    ':profile_picture' => null,
-    ':role' => 'user'
-]);
-
-
-    session_destroy();
-    echo "<script>
-      alert('✅ Matagumpay na nakarehistro ang iyong account!');
-      window.location.href = '../index.php';
-    </script>";
-    exit();
-
+        ':first_name' => $data['first_name'],
+        ':last_name' => $data['last_name'],
+        ':email' => $data['email'],
+        ':password' => $hashedPassword,
+        ':gender' => $data['gender'],
+        ':age' => $data['age'],
+        ':religion' => $data['religion'],
+        ':education_level' => $data['education_level'],
+        ':major' => $data['education_level'] === 'College' ? $data['major'] : null,
+        ':strand' => $data['education_level'] === 'SHS' ? $data['strand'] : null,
+        ':school_name' => $data['school_name'],
+        ':is_mandaluyong_resident' => $data['is_mandaluyong_resident'],
+        ':barangay' => $data['barangay'],
+        ':city_outside_mandaluyong' => $data['city_outside_mandaluyong'],
+        ':contact_number' => $data['contact_number'],
+        ':profile_picture' => null,
+        ':role' => 'user'
+    ]);
+    
+    // Clear the registration session
+    unset($_SESSION['registration']);
+    
+    echo 'success';
+    
 } catch (PDOException $e) {
     echo "Error: " . $e->getMessage();
 }
