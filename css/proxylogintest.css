@@ -1,0 +1,408 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.wrapper {
+    position: relative;
+    width: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 30px 40px;
+    color: #fff;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.wrapper.active-popup {
+    transform: scale(1);
+}
+
+.wrapper .icon-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 45px;
+    height: 45px;
+    background: #162938;
+    font-size: 2em;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom-left-radius: 20px;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.form-box {
+    width: 100%;
+    padding: 40px;
+}
+
+.form-box h2 {
+    font-size: 2em;
+    color: #162938;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.input-box {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    border-bottom: 2px solid #162938;
+    margin: 30px 0;
+}
+
+.input-box label {
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    color: #162938;
+    font-size: 1em;
+    pointer-events: none;
+    transition: 0.5s;
+}
+
+.input-box input:focus~label,
+.input-box input:valid~label {
+    top: -5px;
+}
+
+.input-box input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    color: #162938;
+    font-weight: 600;
+    padding: 0 35px 0 5px;
+}
+
+.input-box .icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    color: #162938;
+}
+
+.remember-forgot {
+    font-size: 0.9em;
+    color: #162938;
+    font-weight: 500;
+    margin: -15px 0 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.remember-forgot label input {
+    accent-color: #162938;
+    margin-right: 3px;
+}
+
+.remember-forgot a {
+    color: #162938;
+    text-decoration: none;
+}
+
+.remember-forgot a:hover {
+    text-decoration: underline;
+}
+
+.btn {
+    width: 100%;
+    height: 45px;
+    background: #162938;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #fff;
+    font-weight: 500;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background: #0f1419;
+}
+
+.login-register {
+    font-size: 0.9em;
+    color: #162938;
+    text-align: center;
+    font-weight: 500;
+    margin: 25px 0 10px;
+}
+
+.login-register p a {
+    color: #162938;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-register p a:hover {
+    text-decoration: underline;
+}
+
+.form-message {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Registration Form Styles */
+#registerForm {
+    display: none;
+    width: 100%;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    color: #162938;
+}
+
+#registerForm h2 {
+    color: #162938;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+#registerForm input,
+#registerForm select {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    background: #fff;
+    color: #162938;
+    transition: border-color 0.3s;
+}
+
+#registerForm input:focus,
+#registerForm select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+}
+
+#registerForm button {
+    width: 100%;
+    padding: 12px;
+    margin: 15px 0 10px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#registerForm button:hover {
+    background: #5a67d8;
+}
+
+#registerForm button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Step Navigation */
+.form-step {
+    animation: fadeIn 0.3s ease-in;
+}
+
+.form-step.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Password Validation Styles */
+.invalid-input {
+    border-color: #e53e3e !important;
+    box-shadow: 0 0 5px rgba(229, 62, 62, 0.3) !important;
+}
+
+.valid-input {
+    border-color: #38a169 !important;
+    box-shadow: 0 0 5px rgba(56, 161, 105, 0.3) !important;
+}
+
+/* Toggle Password Button */
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #666;
+    z-index: 2;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+/* Radio Button Styles */
+#registerForm input[type="radio"] {
+    width: auto;
+    margin-right: 8px;
+    margin-left: 0;
+}
+
+#registerForm label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 20px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Conditional Fields */
+.conditional {
+    margin-top: 15px;
+}
+
+.conditional.hidden {
+    display: none;
+}
+
+/* Error Messages */
+#step1-error,
+#form-error-message {
+    color: #e53e3e;
+    font-size: 0.9em;
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(229, 62, 62, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid #e53e3e;
+}
+
+/* Success Messages */
+.success-message {
+    color: #38a169;
+    font-size: 0.9em;
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(56, 161, 105, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid #38a169;
+}
+
+/* OTP Form Styles */
+.form-box.otp {
+    display: none;
+}
+
+.form-box.otp input[name="otp"] {
+    text-align: center;
+    font-size: 1.5em;
+    letter-spacing: 0.5em;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .wrapper {
+        width: 90%;
+        padding: 20px 25px;
+    }
+    
+    #registerForm {
+        width: 90%;
+        padding: 20px;
+    }
+    
+    .form-box {
+        padding: 20px;
+    }
+    
+    .form-box h2 {
+        font-size: 1.5em;
+    }
+}
+
+/* Signup Link */
+.signup {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #162938;
+}
+
+.signup a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.signup a:hover {
+    text-decoration: underline;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #667eea;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Datalist Styling */
+#registerForm input[list] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+}

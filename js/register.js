@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
         nextStep(2);
     });
 
-    // Final form submission - FIXED PATH TO INCLUDE 'login/' FOLDER
+    // Final form submission - FIXED THE MAJOR FIELD ISSUE
     document.getElementById("registerForm").addEventListener("submit", function (e) {
         e.preventDefault();
 
@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append('city_outside_mandaluyong', document.getElementById('city').value);
         }
         
-        // Step 3 data
+        // Step 3 data - FIXED THE MAJOR FIELD ISSUE
         const educationLevel = document.querySelector('select[name="education_level"]').value;
         formData.append('education_level', educationLevel);
         
@@ -279,7 +279,9 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append('strand', document.querySelector('select[name="strand"]').value || '');
             formData.append('major', '');
         } else if (educationLevel === 'College' || educationLevel === 'Graduate') {
-            formData.append('major', document.querySelector('select[name="major"]').value || '');
+            // FIXED: Use input[name="major"] instead of select[name="major"] since it's a datalist
+            const majorInput = document.querySelector('input[name="major"]');
+            formData.append('major', majorInput ? majorInput.value : '');
             formData.append('strand', '');
         } else {
             formData.append('strand', '');
@@ -288,8 +290,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         formData.append('school_name', document.querySelector('input[name="school_name"]').value);
         
-        // FIXED: Add 'login/' to the path since your PHP files are in the login folder
-        fetch('login/send_otp.php', {
+        // Send OTP
+        fetch('/library-app/login/send_otp.php', {
             method: 'POST',
             body: formData
         })
@@ -297,9 +299,14 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => {
             console.log('OTP Response:', response);
             if (response.includes('success') || response.trim() === 'success') {
+                // FIXED: Properly hide forms and show OTP
                 document.querySelector(".form-box.login").style.display = "none";
                 document.getElementById("registerForm").style.display = "none";
-                document.querySelector(".form-box.otp").style.display = "block";
+                
+                // Show OTP form and remove hidden class
+                const otpBox = document.querySelector(".form-box.otp");
+                otpBox.style.display = "block";
+                otpBox.classList.remove("hidden");
             } else {
                 alert("Error sending OTP: " + response);
             }
@@ -310,15 +317,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // OTP submission - FIXED PATH TO INCLUDE 'login/' FOLDER
+    // OTP submission
     document.getElementById("otp-form").addEventListener("submit", function (e) {
         e.preventDefault();
         
         const otpData = new FormData();
         otpData.append('otp', document.querySelector('input[name="otp"]').value);
         
-        // FIXED: Add 'login/' to the path
-        fetch('login/validate_otp.php', {
+        fetch('/library-app/login/validate_otp.php', {
             method: 'POST',
             body: otpData
         })
@@ -327,8 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log('OTP Validation Response:', response);
             if (response.includes('success') || response.trim() === 'success') {
                 // OTP verified, now save user
-                // FIXED: Add 'login/' to the path
-                fetch('login/save_user.php', {
+                fetch('/library-app/login/save_user.php', {
                     method: 'POST'
                 })
                 .then(res => res.text())
@@ -337,16 +342,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (saveResponse.includes('success') || saveResponse.trim() === 'success') {
                         document.getElementById("otp-message").innerHTML = `<span style="color:green;">Registration successful! You may now login.</span>`;
                         setTimeout(() => {
-                            // Reset forms and show login
-                            document.querySelector(".form-box.otp").style.display = "none";
-                            document.querySelector(".form-box.login").style.display = "block";
+                            // Reset forms and show login - FIXED: Properly handle hidden classes
+                            const otpBox = document.querySelector(".form-box.otp");
+                            const loginBox = document.querySelector(".form-box.login");
+                            
+                            otpBox.style.display = "none";
+                            otpBox.classList.add("hidden");
+                            loginBox.style.display = "block";
+                            loginBox.classList.remove("hidden");
+                            
                             document.getElementById("registerForm").reset();
                             document.getElementById("otp-form").reset();
+                            
                             // Reset to step 1
                             document.querySelector(".step-1").classList.remove("hidden");
                             document.querySelector(".step-2").classList.add("hidden");
                             document.querySelector(".step-3").classList.add("hidden");
                             currentStep = 1;
+                            
                             // Clear password feedback
                             if (passwordStrength) passwordStrength.textContent = "";
                             if (matchMessage) matchMessage.textContent = "";
@@ -371,12 +384,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Toggle login/register display
+    // Toggle login/register display - FIXED: Properly handle hidden classes
     document.getElementById("show-register")?.addEventListener("click", function (e) {
         e.preventDefault();
-        document.querySelector(".form-box.login").style.display = "none";
-        document.getElementById("registerForm").style.display = "block";
-        document.querySelector(".form-box.otp").style.display = "none";
+        
+        const loginBox = document.querySelector(".form-box.login");
+        const registerForm = document.getElementById("registerForm");
+        const otpBox = document.querySelector(".form-box.otp");
+        
+        loginBox.style.display = "none";
+        registerForm.style.display = "block";
+        otpBox.style.display = "none";
+        otpBox.classList.add("hidden");
+        
         document.querySelector(".step-1").classList.remove("hidden");
         document.querySelector(".step-2").classList.add("hidden");
         document.querySelector(".step-3").classList.add("hidden");
@@ -385,8 +405,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("show-login")?.addEventListener("click", function (e) {
         e.preventDefault();
-        document.querySelector(".form-box.login").style.display = "block";
-        document.getElementById("registerForm").style.display = "none";
-        document.querySelector(".form-box.otp").style.display = "none";
+        
+        const loginBox = document.querySelector(".form-box.login");
+        const registerForm = document.getElementById("registerForm");
+        const otpBox = document.querySelector(".form-box.otp");
+        
+        loginBox.style.display = "block";
+        registerForm.style.display = "none";
+        otpBox.style.display = "none";
+        otpBox.classList.add("hidden");
     });
 });

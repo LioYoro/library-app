@@ -204,7 +204,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
     <?php endif; ?> --> 
     
     
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 10px;">
         <form action="admin/index.php" method="get">
             <button type="submit" style="padding: 10px 20px; background-color: #1d4ed8; color: white; border: none; border-radius: 5px; cursor: pointer;">
                 Go to Admin Panel
@@ -219,8 +219,8 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
     </div>
 
     <section class="custom-slider-section">
-        <div class="volume-icon">
-            <i class="fas fa-volume-up"></i>
+        <div class="megaphone-icon">
+            <ion-icon name="megaphone"></ion-icon>
         </div>
         <div class="slider-content">
             <button class="slider-nav">
@@ -261,14 +261,14 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                 <?php if ($viewedBook): ?>
                     <!-- Because You Viewed -->
                     <div class="section-block">
-                        <h2 class="section-title">Because you viewed <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
+                        <h2 class="section-title">Because you viewed: <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
                         <div class="book-grid">
                             <?php foreach ($recommendations as $b): ?>
                                 <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue">
                                     <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                    <?php if (!empty($b['AUTHOR'])): ?><div>👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                                    <?php if (!empty($b['CALL NUMBER'])): ?><div>🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?>
-                                    <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                                    <div class="book-meta"><?php if (!empty($b['AUTHOR'])): ?><div><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?></div>
+                                    <div class="book-meta"><?php if (!empty($b['CALL NUMBER'])): ?><div><strong><em>Call Number: </em></strong><?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?></div>
+                                    <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -282,7 +282,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                                 <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow">
                                     <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
                                     <?php if (!empty($t['CALL NUMBER'])): ?><div><?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
-                                    <div class="book-meta">👍 <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+                                    <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -291,13 +291,13 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                     <!-- Other Works -->
                     <?php if (!empty($otherWorks)): ?>
                         <div class="section-block">
-                            <h2 class="section-title">✍️ Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
+                            <h2 class="section-title">Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
                             <div class="book-grid">
                                 <?php foreach ($otherWorks as $w): ?>
                                     <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple">
                                         <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
                                         <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
-                                        <div class="book-meta">👍 <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+                                        <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
@@ -314,8 +314,8 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         foreach ($stmt as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange">
                                 <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta">👤 <?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                                <div class="book-meta">👍 <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                                <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta"><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+                                <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -326,7 +326,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
             <div class="w-full md:w-1/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <section class="aside-box" id="liked-section">
-                        <h3 class="aside-title">👍 Your Likes</h3>
+                        <h3 class="aside-title">Your Likes</h3>
                         <?php if (empty($likedBooks)): ?>
                             <p class="aside-empty">You haven't liked any books yet.</p>
                         <?php else: ?>
@@ -353,7 +353,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                 
                 <!-- Recommended -->
                 <section class="aside-box" id="recommended-section">
-                    <h3 class="aside-title">🎓 Recommended for Your Field</h3>
+                    <h3 class="aside-title"> Recommended for Your Field</h3>
                     <?php if (empty($recommendedBooks)): ?>
                         <p class="aside-empty">No recommendations available for your field.</p>
                         <?php if (isset($_SESSION['user_id'])): ?>
@@ -380,7 +380,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                 
                 <!-- Commented -->
                 <section class="aside-box" id="commented-section">
-                    <h3 class="aside-title">💬 Top Commented Books</h3>
+                    <h3 class="aside-title">Top Commented Books</h3>
                     <?php if (empty($topCommented)): ?>
                         <p class="aside-empty">No books have comments yet.</p>
                     <?php else: ?>
@@ -402,27 +402,6 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <?php endfor; ?>
                         </div>
                     <?php endif; ?>
-                </section>
-                
-                <!-- Info Boxes -->
-                <section class="info-box">
-                    <h3 class="info-title">External Resources</h3>
-                    <ul class="info-list">
-                        <li><a href="#" class="info-link">Online Journals</a></li>
-                        <li><a href="#" class="info-link">Educational Databases</a></li>
-                        <li><a href="#" class="info-link">E-book Platforms</a></li>
-                    </ul>
-                </section>
-                
-                <section class="info-box">
-                    <h3 class="info-title">Library Guidelines</h3>
-                    <ul class="info-list">
-                        <li>Maintain silence.</li>
-                        <li>Handle books with care.</li>
-                        <li>Return books on time.</li>
-                        <li>No food or drinks allowed.</li>
-                        <li>Respect fellow readers.</li>
-                    </ul>
                 </section>
             </div>
         </div>
@@ -447,3 +426,4 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
 
 <script src="js/comment.js"></script>
 <script src="js/login.js"></script>
+<script src="js/pagination.js"></script>

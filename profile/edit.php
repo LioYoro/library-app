@@ -205,7 +205,6 @@ if (!$user) die("User not found.");
                   <option value="BS Hospitality Management">
                   <option value="BS Industrial Engineering">
                   <option value="BS Information Technology">
-                  <option value="BS IT">
                   <option value="BS Management Accounting">
                   <option value="BS Mechanical Engineering">
                   <option value="BS Nursing">

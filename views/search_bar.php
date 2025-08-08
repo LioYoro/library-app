@@ -26,7 +26,7 @@
     </button>
     
     <a href="views/favorites.php" class="search-btn">
-      ❤️ BOOKMARKS
+      BOOKMARKS
     </a>
   </form>
 </div>

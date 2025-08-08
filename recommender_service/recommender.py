@@ -203,18 +203,64 @@ class Recommender:
         return "\n".join(out)
 
     MAJOR_CATEGORY_MAP = {
-        "AB Political Science": ["Politics", "History", "Social Science"],
-        "AB Psychology": ["Psychology", "Self-Help"],
-        "BA Broadcasting": ["Art & Media"],
-        "BA History": ["History"],
-        "BS Accountancy": ["Business & Career"],
-        "BS Architecture": ["Art & Media"],
-        "BS Civil Engineering": ["Science"],
-        "BS Computer Engineering": ["Science"],
-        "BS Dentistry": ["Health"],
-        "BS ECE": ["Science"],
-        # ... add all other majors
+        # Arts, Humanities, and Social Sciences
+        "AB Political Science": ["Politics", "Non-Fiction", "History", "Law"],
+        "AB Psychology": ["Psychology", "Social Science", "Non-Fiction"],
+        "BA Broadcasting": ["Art & Media", "Non-Fiction"],
+        "BA History": ["History", "Non-Fiction"],
+        "BA Political Science": ["Politics", "Non-Fiction", "History", "Law"],
+
+        # Business & Economics
+        "BS Accountancy": ["Business & Career", "Economics", "Non-Fiction"],
+        "BS Management Accounting": ["Business & Career", "Economics", "Non-Fiction"],
+        "BSBA Financial Management": ["Business & Career", "Economics", "Non-Fiction"],
+        "BSBA Human Resource Management": ["Business & Career", "Non-Fiction"],
+        "BSBA Marketing Management": ["Business & Career", "Non-Fiction"],
+        "BS Entrepreneurship": ["Business & Career", "Non-Fiction"],
+        "BS Economics": ["Economics", "Business & Career", "Non-Fiction"],
+
+        # Psychology
+        "BS Psychology": ["Psychology", "Social Science", "Non-Fiction"],
+
+        # Engineering & Technology
+        "BS Architecture": ["Art & Media", "Science", "Craft"],
+        "BS Civil Engineering": ["Science", "Non-Fiction"],
+        "BS Computer Engineering": ["Science", "Non-Fiction"],
+        "BS ECE": ["Science", "Non-Fiction"],
+        "BS Electrical Engineering": ["Science", "Non-Fiction"],
+        "BS Electronics Engineering": ["Science", "Non-Fiction"],
+        "BS Industrial Engineering": ["Science", "Non-Fiction"],
+        "BS Information Technology": ["Science", "Non-Fiction"],
+        "BS Mechanical Engineering": ["Science", "Non-Fiction"],
+
+        # Education
+        "BS Education": ["Education", "Non-Fiction"],
+        "BS Education Major in Filipino": ["Education", "Non-Fiction"],
+        "BS Education Major in Math": ["Education", "Science", "Non-Fiction"],
+        "BS Education Major in Science": ["Education", "Science", "Non-Fiction"],
+        "BS Education Major in Social Studies": ["Education", "History", "Non-Fiction"],
+        "BS Elementary Education": ["Education", "Non-Fiction"],
+        "BSE Filipino": ["Education", "Non-Fiction"],
+        "BSE Math": ["Education", "Science", "Non-Fiction"],
+        "BSE Science": ["Education", "Science", "Non-Fiction"],
+        "BSE Social Studies": ["Education", "History", "Non-Fiction"],
+        "BSED Filipino": ["Education", "Non-Fiction"],
+        "BSED ICT": ["Education", "Science", "Non-Fiction"],
+        "BSED Science": ["Education", "Science", "Non-Fiction"],
+        "BSES Social Studies": ["Education", "History", "Non-Fiction"],
+
+        # Health & Medical
+        "BS Dentistry": ["Health", "Science", "Non-Fiction"],
+        "BS Nursing": ["Health", "Science", "Non-Fiction"],
+
+        # Hospitality & Office Work
+        "BS Hospitality Management": ["Culinary", "Business & Career", "Non-Fiction"],
+        "BS Office Administration": ["Business & Career", "Non-Fiction"],
+
+        # Specialized
+        "BTVTED Garments, Fashion and Design": ["Craft", "Art & Media", "Non-Fiction"],
     }
+
 
     STRAND_CATEGORY_MAP = {
         "ABM": ["Business & Career", "Economics"],
