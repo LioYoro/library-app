@@ -28,6 +28,10 @@
     <a href="views/favorites.php" class="search-btn">
       BOOKMARKS
     </a>
+
+    <a href="book_reservation/my_reservations.php" class="search-btn">
+    MY RESERVATIONS
+    </a>
   </form>
 </div>
 

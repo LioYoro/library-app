@@ -1,0 +1,207 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+th,
+td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+th {
+  background: #007bff;
+  color: white;
+}
+.status-pending {
+  background-color: #fcd34d;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+.status-borrowed {
+  background-color: #34d399;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+.status-cancelled {
+  background-color: #f87171;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+.action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+.btn-confirm {
+  background-color: #3b82f6;
+  color: white;
+}
+.btn-cancel {
+  background-color: #ef4444;
+  color: white;
+}
+.btn-done {
+  background-color: #facc15;
+  color: black;
+}
+.btn-back {
+  display: inline-block;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: #007bff;
+}
+
+/* Enhanced Action Container */
+.action-container {
+  position: relative;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  transition: opacity 0.3s ease;
+}
+
+.action-buttons.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Overlay Prompt */
+.overlay-prompt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  display: none;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prompt-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.prompt-text {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+.prompt-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.prompt-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.prompt-btn.yes {
+  background-color: #10b981;
+  color: white;
+}
+.prompt-btn.yes:hover {
+  background-color: #059669;
+}
+.prompt-btn.no {
+  background-color: #6b7280;
+  color: white;
+}
+.prompt-btn.no:hover {
+  background-color: #4b5563;
+}
+
+/* Action Result */
+.action-result {
+  display: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.result-confirmed {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+.result-cancelled {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+.result-done {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

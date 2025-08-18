@@ -1,6 +1,9 @@
 <?php
 session_start();
 $userId = $_SESSION['user_id'] ?? null;
+$error = $_GET['error'] ?? '';
+$success = isset($_GET['success']) ? "Reservation submitted successfully! Please wait for admin confirmation." : '';
+
 
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -198,6 +201,89 @@ if ($userId) {
       </button>
     </form>
   </div>
+
+<?php
+// Determine book reservation availability
+date_default_timezone_set('Asia/Manila'); // set to PH time
+$currentTime = date('H:i'); // current server time
+$canReserveNow = true;
+//$canReserveNow = ($currentTime >= '07:30' && $currentTime <= '19:00');
+
+
+$disableReserve = false;
+$reservationMessage = '';
+
+// 1. Walk-in status
+switch ($book['status']) {
+    case 'borrowed':
+        $disableReserve = true;
+        $reservationMessage = "❌ Book Currently Borrowed";
+        break;
+    case 'archived':
+        $disableReserve = true;
+        $reservationMessage = "❌ Book Unavailable";
+        break;
+    case 'reserved':
+        $reservationMessage = "⚠️ Book Reserved by Walk-in";
+        break;
+}
+
+// 2. Check latest reservation
+$resStmt = $pdo->prepare("
+    SELECT * FROM reservations 
+    WHERE book_id = ? 
+    AND status IN ('pending','borrowed')
+    AND done = 0
+    ORDER BY created_at DESC 
+    LIMIT 1
+");
+$resStmt->execute([$book['id']]);
+$currentReservation = $resStmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$disableReserve && $currentReservation) {
+    if ($currentReservation['status'] === 'borrowed') {
+        $disableReserve = true;
+        if ($currentReservation['user_id'] == $userId) {
+            $reservationMessage = "✅ You have borrowed this book via reservation";
+        } else {
+            $reservationMessage = "⚠️ Book Already Borrowed via Reservation";
+        }
+    } elseif ($currentReservation['status'] === 'pending') {
+        if ($currentReservation['user_id'] == $userId) {
+            $disableReserve = true;
+            $reservationMessage = "⏳ You already have a pending reservation for this book";
+        } else {
+            $reservationMessage = "⏳ Another user has a pending reservation for this book";
+        }
+    }
+}
+
+?>
+
+<div class="mb-6 p-4 border rounded bg-white shadow">
+    <h2 class="font-semibold mb-2">📖 Book Reservation Status</h2>
+
+    <?php if ($reservationMessage): ?>
+        <p class="<?= $book['status'] === 'Borrowed' ? 'text-red-600' : 'text-yellow-600' ?> font-bold">
+            <?= htmlspecialchars($reservationMessage) ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if ($userId): ?>
+        <form method="post" action="../book_reservation/reserve.php">
+            <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
+            <input type="hidden" name="book_id" value="<?= $book['id'] ?>">
+            <button type="submit" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                <?= $disableReserve ? 'disabled' : '' ?>>
+                📌 Reserve Book
+            </button>
+        </form>
+    <?php else: ?>
+        <p class="text-sm text-gray-600">🔒 <a href="../login/login.php" class="text-blue-600 underline">Log in</a> to reserve this book.</p>
+    <?php endif; ?>
+</div>
+
 
   <!-- 🗨️ Comments -->
 <section class="mb-6">

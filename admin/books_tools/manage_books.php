@@ -209,8 +209,8 @@ function highlight($text, $term) {
               <?php else: ?>
                 <?php foreach ($books as $book): ?>
                   <tr class="hover:bg-gray-50">
-                    <td class="border px-2 py-1"><input type="checkbox" name="selected_ids[]" value="<?= $book['No.'] ?>" /></td>
-                    <td class="border px-2 py-1"><?= htmlspecialchars($book['No.']) ?></td>
+                    <td class="border px-2 py-1"><input type="checkbox" name="selected_ids[]" value="<?= $book['id'] ?>" /></td>
+                    <td class="border px-2 py-1"><?= htmlspecialchars($book['id']) ?></td>
                     <td class="border px-2 py-1"><?= highlight($book['TITLE'], $searchTerm) ?></td>
                     <td class="border px-2 py-1"><?= highlight($book['AUTHOR'], $searchTerm) ?></td>
                     <td class="border px-2 py-1"><?= highlight($book['ACCESSION NO.'], $searchTerm) ?></td>
@@ -223,19 +223,19 @@ function highlight($text, $term) {
                     <td class="border px-2 py-1"><?= $book['Like'] ?></td>
                     <td class="border px-2 py-1"><?= $book['Dislike'] ?></td>
                     <td class="border px-2 py-1 space-x-1">
-                      <button type="button" class="editBtn bg-yellow-400 px-2 py-1 rounded hover:bg-yellow-500" data-id="<?= $book['No.'] ?>">Edit</button>
+                      <button type="button" class="editBtn bg-yellow-400 px-2 py-1 rounded hover:bg-yellow-500" data-id="<?= $book['id'] ?>">Edit</button>
                       <form method="POST" class="inline" onsubmit="return confirm('Delete this book?');" style="display:inline;">
-                        <input type="hidden" name="id" value="<?= $book['No.'] ?>" />
+                        <input type="hidden" name="id" value="<?= $book['id'] ?>" />
                         <button type="submit" name="delete_book" class="bg-red-600 px-2 py-1 text-white rounded hover:bg-red-700">Delete</button>
                       </form>
                     </td>
                   </tr>
 
                   <!-- Hidden Edit Form -->
-                  <tr class="editFormRow hidden bg-gray-100" id="editFormRow-<?= $book['No.'] ?>">
+                  <tr class="editFormRow hidden bg-gray-100" id="editFormRow-<?= $book['id'] ?>">
                     <td colspan="14" class="p-2">
                       <form method="POST" class="space-y-2">
-                        <input type="hidden" name="id" value="<?= $book['No.'] ?>" />
+                        <input type="hidden" name="id" value="<?= $book['id'] ?>" />
                         <div class="flex flex-wrap gap-2">
                           <input type="text" name="title" value="<?= htmlspecialchars($book['TITLE']) ?>" placeholder="Title" class="border rounded px-2 py-1 flex-grow" required />
                           <input type="text" name="author" value="<?= htmlspecialchars($book['AUTHOR']) ?>" placeholder="Author" class="border rounded px-2 py-1 flex-grow" required />
@@ -245,11 +245,11 @@ function highlight($text, $term) {
                         </div>
                         <div class="flex flex-wrap gap-2 mt-2">
                           <input type="text" name="summary" value="<?= htmlspecialchars($book['SUMMARY']) ?>" placeholder="Summary" class="border rounded px-2 py-1 flex-grow" />
-                          <input type="text" name="keywords" value="<?= htmlspecialchars($book['KEYWORDS ']) ?>" placeholder="Keywords" class="border rounded px-2 py-1 flex-grow" />
+                          <input type="text" name="keywords" value="<?= htmlspecialchars($book['KEYWORDS']) ?>" placeholder="Keywords" class="border rounded px-2 py-1 flex-grow" />
                           <input type="text" name="general_category" value="<?= htmlspecialchars($book['General_Category']) ?>" placeholder="Category" class="border rounded px-2 py-1 flex-grow" />
                           <input type="text" name="sub_category" value="<?= htmlspecialchars($book['Sub_Category']) ?>" placeholder="Subcategory" class="border rounded px-2 py-1 flex-grow" />
-                          <input type="number" name="likes" value="<?= $book['likes'] ?>" placeholder="Like" class="border rounded px-2 py-1 w-20" />
-                          <input type="number" name="dislikes" value="<?= $book['dislikes'] ?>" placeholder="Dislike" class="border rounded px-2 py-1 w-20" />
+                          <input type="number" name="likes" value="<?= $book['Like'] ?>" placeholder="Like" class="border rounded px-2 py-1 w-20" />
+                          <input type="number" name="dislikes" value="<?= $book['Dislike'] ?>" placeholder="Dislike" class="border rounded px-2 py-1 w-20" />
                         </div>
                         <div class="mt-2">
                           <button type="submit" name="edit_book" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Save</button>

@@ -1,0 +1,57 @@
+table { 
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+th {
+  background: #007bff;
+  color: white;
+}
+.btn-back {
+  display: inline-block;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: #007bff;
+}
+select {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.search-container {
+  margin: 10px 0;
+}
+
+#bookSearch {
+  width: 300px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}

@@ -14,7 +14,11 @@ include('includes/sidebar.php');
   </header>
 
   <main class="flex-1 p-6 bg-white overflow-y-auto">
-    <p>This is the Dashboard Overview.</p>
+    <form action="../index.php" method="get">
+            <button type="submit" style="padding: 10px 20px; background-color: #1d4ed8; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Go to User Panel
+            </button>
+        </form>
   </main>
 </div>
 

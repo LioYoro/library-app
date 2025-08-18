@@ -22,7 +22,7 @@ try:
         host="localhost",
         user="root",
         password="",  # update if you have a password
-        database="lib_data"
+        database="library_test_db"
     )
     cursor = conn.cursor()
 
