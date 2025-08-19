@@ -14,51 +14,49 @@ $reservedPage = isset($_GET['reserved_page']) ? max(1, intval($_GET['reserved_pa
 // Quick Stats
 // ----------------------
 $totalReservations = $conn->query("SELECT COUNT(*) FROM reservations")->fetchColumn();
-$currentBorrowed = $conn->query("SELECT COUNT(*) FROM reservations WHERE status='borrowed'")->fetchColumn();
+$currentBorrowed = $conn->query("SELECT COUNT(*) FROM reservations WHERE status='borrowed' AND done=0")->fetchColumn();
 $currentPending = $conn->query("SELECT COUNT(*) FROM reservations WHERE status='pending'")->fetchColumn();
 
 // ----------------------
-// Top Borrowed Books
+// Top Borrowed Books (Historic)
 // ----------------------
 $borrowedOffset = ($borrowedPage - 1) * $perPage;
 $stmtBorrowed = $conn->prepare("
     SELECT r.book_title, b.`CALL NUMBER` AS call_number, COUNT(*) as total_borrows
     FROM reservations r
     LEFT JOIN books b ON r.book_title = b.TITLE
-    WHERE r.status='borrowed'
+    WHERE r.status='borrowed' AND r.done=1
     GROUP BY r.book_title, b.`CALL NUMBER`
     ORDER BY total_borrows DESC
     LIMIT :limit OFFSET :offset
 ");
-
 $stmtBorrowed->bindValue(':limit', $perPage, PDO::PARAM_INT);
 $stmtBorrowed->bindValue(':offset', $borrowedOffset, PDO::PARAM_INT);
 $stmtBorrowed->execute();
 $topBorrowed = $stmtBorrowed->fetchAll(PDO::FETCH_ASSOC);
 
-$totalBorrowedBooks = $conn->query("SELECT COUNT(DISTINCT book_title) FROM reservations WHERE status='borrowed'")->fetchColumn();
+$totalBorrowedBooks = $conn->query("SELECT COUNT(DISTINCT book_title) FROM reservations WHERE status='borrowed' AND done=1")->fetchColumn();
 $totalBorrowedPages = ceil($totalBorrowedBooks / $perPage);
 
 // ----------------------
-// Top Reserved Books
+// Top Reserved Books (Historic)
 // ----------------------
 $reservedOffset = ($reservedPage - 1) * $perPage;
 $stmtReserved = $conn->prepare("
     SELECT r.book_title, b.`CALL NUMBER` AS call_number, COUNT(*) as total_reservations
     FROM reservations r
     LEFT JOIN books b ON r.book_title = b.TITLE
-    WHERE r.status IN ('pending','borrowed')
+    WHERE r.status IN ('pending','borrowed') AND r.done=1
     GROUP BY r.book_title
     ORDER BY total_reservations DESC
     LIMIT :limit OFFSET :offset
 ");
-
 $stmtReserved->bindValue(':limit', $perPage, PDO::PARAM_INT);
 $stmtReserved->bindValue(':offset', $reservedOffset, PDO::PARAM_INT);
 $stmtReserved->execute();
 $topReserved = $stmtReserved->fetchAll(PDO::FETCH_ASSOC);
 
-$totalReservedBooks = $conn->query("SELECT COUNT(DISTINCT book_title) FROM reservations WHERE status IN ('pending','borrowed')")->fetchColumn();
+$totalReservedBooks = $conn->query("SELECT COUNT(DISTINCT book_title) FROM reservations WHERE status IN ('pending','borrowed') AND done=1")->fetchColumn();
 $totalReservedPages = ceil($totalReservedBooks / $perPage);
 ?>
 
@@ -96,7 +94,7 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
         <div class="book-item">
             <div class="book-info">
                 <span class="book-title" data-fulltitle="<?= htmlspecialchars($b['book_title']) ?>">
-                    <?= htmlspecialchars($b['book_title']) ?>
+                    <strong><?= htmlspecialchars($b['book_title']) ?></strong>
                 </span>
                 <span class="book-callnumber"><?= htmlspecialchars($b['call_number']) ?></span>
             </div>
@@ -117,7 +115,7 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
         <div class="book-item">
             <div class="book-info">
                 <span class="book-title" data-fulltitle="<?= htmlspecialchars($r['book_title']) ?>">
-                    <?= htmlspecialchars($r['book_title']) ?>
+                    <strong><?= htmlspecialchars($r['book_title']) ?></strong>
                 </span>
                 <span class="book-callnumber"><?= htmlspecialchars($r['call_number']) ?></span>
             </div>
@@ -138,144 +136,22 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
 </html>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    padding: 2rem;
-    background-color: #fafafa;
-    color: #333;
-}
-
-h1, h2 {
-    margin-bottom: 1rem;
-}
-
-a.btn-back, .btn-generate {
-    display: inline-block;
-    padding: 8px 15px;
-    margin-bottom: 20px;
-    background-color: #007BFF;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-a.btn-back:hover, .btn-generate:hover {
-    background-color: #0056b3;
-}
-
-/* Quick Summary Boxes */
-.summary-boxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.summary-box {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    padding: 15px 20px;
-    border-radius: 8px;
-    min-width: 200px;
-    flex: 1 1 200px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.summary-box strong {
-    display: block;
-    font-size: 1rem;
-    margin-bottom: 5px;
-}
-
-.summary-box p {
-    font-size: 1.5rem;
-    margin: 0;
-}
-
-/* Book Lists */
-.book-list {
-    margin-bottom: 20px;
-}
-
-.book-item {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    padding: 10px 15px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.book-info {
-    display: flex;
-    flex-direction: column;
-    max-width: 70%;
-}
-
-.book-item .book-title {
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.book-item .book-title:hover::after {
-    content: attr(data-fulltitle);
-    position: absolute;
-    background: #333;
-    color: #fff;
-    padding: 5px 8px;
-    border-radius: 4px;
-    white-space: normal;
-    max-width: 300px;
-    z-index: 100;
-    top: 25px;
-    left: 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.book-callnumber {
-    font-size: 0.85rem;
-    color: #555;
-    margin-top: 2px;
-}
-
-.book-item .book-count {
-    background-color: #007BFF;
-    color: #fff;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-}
-
-/* Pagination */
-.pagination {
-    margin-bottom: 30px;
-}
-
-.pagination a {
-    display: inline-block;
-    padding: 6px 12px;
-    margin: 0 3px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    text-decoration: none;
-    color: #007BFF;
-    transition: background 0.2s, color 0.2s;
-}
-
-.pagination a:hover {
-    background-color: #007BFF;
-    color: #fff;
-}
-
-.pagination a.active {
-    background-color: #007BFF;
-    color: #fff;
-    border-color: #007BFF;
-}
+body { font-family: Arial, sans-serif; padding: 2rem; background-color: #fafafa; color: #333; }
+h1,h2 { margin-bottom: 1rem; }
+a.btn-back, .btn-generate { display:inline-block; padding:8px 15px; margin-bottom:20px; background-color:#007BFF; color:#fff; text-decoration:none; border-radius:5px; transition:0.2s; }
+a.btn-back:hover, .btn-generate:hover { background-color:#0056b3; }
+.summary-boxes { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:25px; }
+.summary-box { background:#f8f9fa; border:1px solid #ddd; padding:15px 20px; border-radius:8px; min-width:200px; flex:1 1 200px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.summary-box strong { display:block; font-size:1rem; margin-bottom:5px; }
+.summary-box p { font-size:1.5rem; margin:0; }
+.book-list { margin-bottom:20px; }
+.book-item { background:#fff; border:1px solid #ddd; padding:10px 15px; margin-bottom:8px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+.book-info { display:flex; flex-direction:column; max-width:70%; }
+.book-item .book-title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.book-callnumber { font-size:0.85rem; color:#555; margin-top:2px; }
+.book-item .book-count { background-color:#007BFF; color:#fff; padding:3px 8px; border-radius:12px; font-size:0.9rem; }
+.pagination { margin-bottom:30px; }
+.pagination a { display:inline-block; padding:6px 12px; margin:0 3px; border:1px solid #ddd; border-radius:4px; text-decoration:none; color:#007BFF; transition:0.2s; }
+.pagination a:hover { background-color:#007BFF; color:#fff; }
+.pagination a.active { background-color:#007BFF; color:#fff; border-color:#007BFF; }
 </style>

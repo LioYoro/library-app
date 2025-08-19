@@ -69,7 +69,7 @@ if ($format === 'pdf') {
     // Title & As of
     $pdf->Cell(0, 10, 'Library Books Report', 0, 1, 'C');
     $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(0, 6, "🔒 As of: $reportDate", 0, 1, 'C');
+    $pdf->Cell(0, 6, "As of: $reportDate", 0, 1, 'C');
     $pdf->Ln(5);
     $pdf->SetFont('helvetica', '', 12);
 

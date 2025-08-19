@@ -234,7 +234,7 @@ $resStmt = $pdo->prepare("
     WHERE book_id = ? 
     AND status IN ('pending','borrowed')
     AND done = 0
-    ORDER BY created_at DESC 
+    ORDER BY created_at ASC 
     LIMIT 1
 ");
 $resStmt->execute([$book['id']]);
@@ -253,7 +253,8 @@ if (!$disableReserve && $currentReservation) {
             $disableReserve = true;
             $reservationMessage = "⏳ You already have a pending reservation for this book";
         } else {
-            $reservationMessage = "⏳ Another user has a pending reservation for this book";
+            $disableReserve = true;
+            $reservationMessage = "⏳ This book has a pending reservation by another user. Please try again later.";
         }
     }
 }

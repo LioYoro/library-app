@@ -29,6 +29,10 @@ include('includes/sidebar.php');
     <a href="../book_reservation/admin_side/book_summary.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow mb-2 inline-block">
         Book Summary for Reservations
     </a>
+
+    <a href="../book_reservation/check_expired_reservations.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow mb-2 inline-block">
+        Reservation Expiry Check
+    </a>
     <br>
 
     <!-- Placeholder for future admin tools -->

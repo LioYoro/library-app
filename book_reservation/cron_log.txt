@@ -1,0 +1,17 @@
+[2025-08-19 05:02:02] Cron run completed successfully.
+[2025-08-19 05:05:12] Cron run completed successfully.
+[2025-08-19 05:08:08] Reminder sent for reservation 23 to yoroleo10@gmail.com
+[2025-08-19 05:08:08] Cron run completed successfully.
+[2025-08-19 05:09:36] Reminder sent for reservation 23 to yoroleo10@gmail.com
+[2025-08-19 05:09:36] Cron run completed successfully.
+[2025-08-19 05:10:11] Cron run completed successfully.
+[2025-08-19 05:10:13] Cron run completed successfully.
+[2025-08-19 05:10:14] Cron run completed successfully.
+[2025-08-19 05:12:38] Expired reservation 23 notified to yoroleo10@gmail.com
+[2025-08-19 05:12:38] Cron run completed successfully.
+[2025-08-19 05:19:43] Cron run completed successfully.
+[2025-08-19 06:31:55] Cron run completed successfully. Expired reservations: 0, Reminders sent: 0
+[2025-08-19 06:32:58] Cron run completed successfully. Expired reservations: 0, Reminders sent: 0
+[2025-08-19 06:33:00] Cron run completed successfully. Expired reservations: 0, Reminders sent: 0
+[2025-08-19 06:35:30] Cron run completed successfully. Expired reservations: 0, Reminders sent: 0
+[2025-08-19 06:35:33] Cron run completed successfully. Expired reservations: 0, Reminders sent: 0

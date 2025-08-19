@@ -205,3 +205,24 @@ th {
     transform: rotate(360deg);
   }
 }
+.status-box.expired {
+    background-color: #d1d5db; /* light gray */
+    color: #6b7280; /* dark gray text */
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.filters {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.filters label {
+    font-weight: 500;
+}
+.filters select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}

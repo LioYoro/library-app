@@ -54,7 +54,6 @@ while ($row = mysqli_fetch_assoc($res)) {
   <meta charset="UTF-8">
   <title>Book Summary</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="../styles.css">
   <style>
     body { font-family: Arial, sans-serif; padding: 2rem; }
     .summary-box {
@@ -105,6 +104,35 @@ while ($row = mysqli_fetch_assoc($res)) {
            style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📊 Download Excel</a>
     </div>
 </div>
+
+<!-- Unified Full Report Button -->
+<div style="position: relative; display: inline-block; margin-left:10px;">
+    <button id="fullReportBtn" type="button"
+        style="background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+        UNIFIED FULL REPORT WITH BOOK RESERVATION DATA ▼
+    </button>
+    <div id="fullReportDropdown"
+        style="display: none; position: absolute; background: white; border: 1px solid #ccc; margin-top: 5px; z-index: 1000;">
+        <a href="full_report.php?format=pdf"
+           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📄 Download PDF</a>
+        <a href="full_report.php?format=excel"
+           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📊 Download Excel</a>
+    </div>
+</div>
+
+<script>
+document.getElementById("fullReportBtn").addEventListener("click", function(e){
+    e.preventDefault();
+    const dropdown = document.getElementById("fullReportDropdown");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+});
+window.addEventListener("click", function(e){
+    if(!e.target.closest("#fullReportBtn") && !e.target.closest("#fullReportDropdown")){
+        document.getElementById("fullReportDropdown").style.display = "none";
+    }
+});
+</script>
+
 
 <script>
 document.getElementById("reportBtn").addEventListener("click", function(e) {

@@ -1,9 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login/login.php");
-    exit;
-}
+require_once __DIR__ . '/../includes/reservation_mailer.php';
 
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -65,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_reservation'])
             } elseif ($selectedDateTime->format('H:i') < '07:30' || $selectedDateTime->format('H:i') > '19:00') {
                 $error = "Pickup time must be between 7:30 AM and 7:00 PM.";
             } else {
-                // Check if book is already reserved
+                // Check if book is already reserved 
                 $checkStmt = $pdo->prepare("SELECT * FROM reservations WHERE book_id = ? AND status IN ('pending','confirmed') LIMIT 1");
                 $checkStmt->execute([$book['id']]);
                 if ($checkStmt->fetch()) {
@@ -82,6 +79,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_reservation'])
                     $insertStmt->execute([$userId, $book['id'], $bookTitle, $pickupDateTime, $expiryDateTime]);
 
                     $success = "Reservation submitted successfully! Please wait for admin confirmation.";
+
+                    // === SEND RESERVATION EMAIL ===
+                    $reservationId = $pdo->lastInsertId();
+                    $stmtUser = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+                    $stmtUser->execute([$userId]);
+                    $userEmail = $stmtUser->fetchColumn();
+
+                    if ($userEmail) {
+                        sendReservationEmail(
+                            $userEmail,
+                            $userName,
+                            $reservationId,
+                            $book['TITLE'],
+                            $book['AUTHOR'],
+                            $book['CALL NUMBER'],
+                            $book['ACCESSION NO.'],
+                            $pickupDateTime,
+                            'Pending'
+                        );
+                    }
+
+                    $adminEmail = 'hextech.abcy@gmail.com'; // replace with your admin email
+                    sendAdminReservationNotification($adminEmail, $reservationId, $userName, $book['TITLE'], $pickupDateTime);
+
                 }
             }
         }
