@@ -1,9 +1,6 @@
 <?php
 session_start();
 $userId = $_SESSION['user_id'] ?? null;
-$error = $_GET['error'] ?? '';
-$success = isset($_GET['success']) ? "Reservation submitted successfully! Please wait for admin confirmation." : '';
-
 
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -164,44 +161,50 @@ if ($userId) {
   </form>
 <?php endif; ?>
 
+<?php require __DIR__ . '/search_bar.php'; ?>
+<main class="max-w-6xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    
+    <!-- LEFT SIDE: Book + Comments in one bordered section -->
+    <div class="md:col-span-2">
+      <section class="border rounded-lg p-6 bg-white shadow-sm">
+        <?php if (!$book): ?>
+          <p class="text-red-600 font-semibold">Book not found.</p>
+        <?php else: ?>
+          <!-- 📖 Book Title & Info -->
+          <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($book['TITLE']) ?></h1>
+          <p class="text-sm text-gray-600 mb-4">
+            👤 <strong>Author:</strong> <?= htmlspecialchars($book['AUTHOR']) ?><br>
+            🔖 <strong>Call Number:</strong> <?= htmlspecialchars($book['CALL NUMBER']) ?><br>
+            📚 <strong>Accession No.:</strong> <?= htmlspecialchars($book['ACCESSION NO.']) ?><br>
+            🏷 <strong>General Category:</strong> <?= htmlspecialchars($book['General_Category']) ?><br>
+            🔖 <strong>Sub-Category:</strong> <?= htmlspecialchars($book['Sub_Category']) ?><br>
+            🧠 <strong>Keywords:</strong> <?= htmlspecialchars($book['KEYWORDS']) ?>
+          </p>
 
-<main class="max-w-3xl mx-auto px-4 py-8">
-<?php if (!$book): ?>
-  <p class="text-red-600 font-semibold">Book not found.</p>
-<?php else: ?>
-  <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($book['TITLE']) ?></h1>
-  <p class="text-sm text-gray-600 mb-4">
-    👤 <strong>Author:</strong> <?= htmlspecialchars($book['AUTHOR']) ?><br>
-    🔖 <strong>Call Number:</strong> <?= htmlspecialchars($book['CALL NUMBER']) ?><br>
-    📚 <strong>Accession No.:</strong> <?= htmlspecialchars($book['ACCESSION NO.']) ?><br>
-    🏷 <strong>General Category:</strong> <?= htmlspecialchars($book['General_Category']) ?><br>
-    🔖 <strong>Sub-Category:</strong> <?= htmlspecialchars($book['Sub_Category']) ?><br>
-    🧠 <strong>Keywords:</strong> <?= htmlspecialchars($book['KEYWORDS']) ?>
-  </p>
+          <!-- 📘 Summary -->
+          <div class="bg-gray-50 border rounded p-4 text-gray-800 mb-6">
+            <h2 class="font-semibold mb-2">📘 Summary</h2>
+            <p class="text-sm leading-relaxed whitespace-pre-line"><?= nl2br(htmlspecialchars($book['SUMMARY'])) ?></p>
+          </div>
 
-  <div class="bg-gray-50 border rounded p-4 text-gray-800 mb-6">
-    <h2 class="font-semibold mb-2">📘 Summary</h2>
-    <p class="text-sm leading-relaxed whitespace-pre-line"><?= nl2br(htmlspecialchars($book['SUMMARY'])) ?></p>
-  </div>
-
-  <!-- 👍👎 Book Vote -->
-  <div class="flex gap-4 mb-6">
-    <form method="post">
-      <input type="hidden" name="action" value="like">
-      <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
-      <button class="px-4 py-2 rounded text-sm transition <?= $userVote === 'like' ? 'bg-green-500 text-white' : 'bg-gray-100 text-green-700 hover:bg-green-200' ?>">
-        👍 Like (<?= $book['Like'] ?? 0 ?>)
-      </button>
-    </form>
-    <form method="post">
-      <input type="hidden" name="action" value="dislike">
-      <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
-      <button class="px-4 py-2 rounded text-sm transition <?= $userVote === 'dislike' ? 'bg-red-500 text-white' : 'bg-gray-100 text-red-700 hover:bg-red-200' ?>">
-        👎 Dislike (<?= $book['Dislike'] ?? 0 ?>)
-      </button>
-    </form>
-  </div>
-
+          <!-- 👍👎 Votes -->
+          <div class="flex gap-4 mb-6">
+            <form method="post">
+              <input type="hidden" name="action" value="like">
+              <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
+              <button class="px-4 py-2 rounded text-sm transition <?= $userVote === 'like' ? 'bg-green-500 text-white' : 'bg-gray-100 text-green-700 hover:bg-green-200' ?>">
+                👍 Like (<?= $book['Like'] ?? 0 ?>)
+              </button>
+            </form>
+            <form method="post">
+              <input type="hidden" name="action" value="dislike">
+              <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
+              <button class="px-4 py-2 rounded text-sm transition <?= $userVote === 'dislike' ? 'bg-red-500 text-white' : 'bg-gray-100 text-red-700 hover:bg-red-200' ?>">
+                👎 Dislike (<?= $book['Dislike'] ?? 0 ?>)
+              </button>
+            </form>
+          </div>
 <?php
 // Determine book reservation availability
 date_default_timezone_set('Asia/Manila'); // set to PH time
@@ -285,108 +288,86 @@ if (!$disableReserve && $currentReservation) {
     <?php endif; ?>
 </div>
 
+          <!-- 🗨️ Comments -->
+          <section class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">🗨️ Comments (<?= $commentCount ?>)</h2>
+            <?php if ($userId): ?>
+              <form method="post" class="mb-4">
+                <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
+                <textarea name="comment" rows="3" class="w-full border rounded p-2 text-sm" placeholder="Leave a comment..."></textarea>
+                <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">Post Comment</button>
+              </form>
+            <?php else: ?>
+              <p class="text-sm text-gray-600 mb-3">🔒 <a href="../login/login.php" class="text-blue-600 underline">Log in</a> to comment or like/dislike.</p>
+            <?php endif; ?>
 
-  <!-- 🗨️ Comments -->
-<section class="mb-6">
-  <h2 class="text-lg font-semibold mb-2">🗨️ Comments (<?= $commentCount ?>)</h2>
-
-  <?php if ($userId): ?>
-    <form method="post" class="mb-4">
-      <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
-      <textarea name="comment" rows="3" class="w-full border rounded p-2 text-sm" placeholder="Leave a comment..."></textarea>
-      <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">Post Comment</button>
-    </form>
-  <?php else: ?>
-    <p class="text-sm text-gray-600 mb-3">🔒 <a href="../login/login.php" class="text-blue-600 underline">Log in</a> to comment or like/dislike.</p>
-  <?php endif; ?>
-
-  <?php foreach ($comments as $c): ?>
-    <div class="border rounded p-3 mb-2 bg-white shadow-sm">
-      <p class="text-sm font-semibold"><?= htmlspecialchars($c['name']) ?> <span class="text-gray-400 text-xs">(<?= $c['created_at'] ?>)</span></p>
-      <p class="text-sm mt-1"><?= nl2br(htmlspecialchars($c['content'])) ?></p>
-      <div class="text-xs text-gray-600 mt-2 flex gap-3 items-center">
-        <form method="post">
-          <input type="hidden" name="comment_action" value="like">
-          <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
-          <button type="submit" class="<?= ($commentVotes[$c['id']] ?? '') === 'like' ? 'text-green-600 font-semibold' : '' ?>">👍 <?= $c['like_count'] ?></button>
-        </form>
-        <form method="post">
-          <input type="hidden" name="comment_action" value="dislike">
-          <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
-          <button type="submit" class="<?= ($commentVotes[$c['id']] ?? '') === 'dislike' ? 'text-red-600 font-semibold' : '' ?>">👎 <?= $c['dislike_count'] ?></button>
-        </form>
-        <?php if ($isAdmin): ?>
-          <form method="post" action="admin/delete_comment.php" onsubmit="return confirm('Delete this comment?')" style="margin-left:auto">
-            <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
-            <button type="submit" class="text-red-600 hover:underline ml-2">🗑️ Delete</button>
-          </form>
+            <?php foreach ($comments as $c): ?>
+              <div class="border rounded p-3 mb-2 bg-white shadow-sm">
+                <p class="text-sm font-semibold"><?= htmlspecialchars($c['name']) ?> 
+                  <span class="text-gray-400 text-xs">(<?= $c['created_at'] ?>)</span>
+                </p>
+                <p class="text-sm mt-1"><?= nl2br(htmlspecialchars($c['content'])) ?></p>
+              </div>
+            <?php endforeach; ?>
+          </section>
         <?php endif; ?>
-      </div>
+      </section>
     </div>
-  <?php endforeach; ?>
 
-  <!-- Pagination Links -->
-  <div class="mt-4 flex justify-center gap-2 text-sm">
-    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-      <a href="?title=<?= urlencode($book['TITLE']) ?>&page=<?= $i ?>"
-         class="px-2 py-1 rounded <?= $i === $page ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300' ?>">
-         <?= $i ?>
-      </a>
-    <?php endfor; ?>
+    <!-- RIGHT SIDE: Sidebar -->
+    <aside class="space-y-6">
+      <!-- 📌 Related Books -->
+      <section class="border rounded-lg p-4 bg-gray-50 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">📌 Related Books</h2>
+        <div class="grid gap-4">
+          <?php
+          $stmt = $pdo->prepare("SELECT * FROM books WHERE TITLE != ? AND MATCH(KEYWORDS) AGAINST(?) LIMIT 3");
+          $stmt->execute([$book['TITLE'], $book['KEYWORDS']]);
+          foreach ($stmt as $b): ?>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
+              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+              👤 <?= htmlspecialchars($b['AUTHOR']) ?><br>
+              🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </section>
+
+      <!-- 🔥 Trending -->
+      <section class="border rounded-lg p-4 bg-gray-50 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">🔥 Trending in <?= htmlspecialchars($book['General_Category']) ?></h2>
+        <div class="grid gap-4">
+          <?php
+          $stmt = $pdo->prepare("SELECT * FROM books WHERE General_Category = ? AND TITLE != ? ORDER BY `Like` DESC LIMIT 3");
+          $stmt->execute([$book['General_Category'], $book['TITLE']]);
+          foreach ($stmt as $b): ?>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
+              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+              👍 <?= $b['Like'] ?? 0 ?> likes<br>
+              🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </section>
+
+      <!-- ✍️ Other Works -->
+      <section class="border rounded-lg p-4 bg-gray-50 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">✍️ Other Works by <?= htmlspecialchars($book['AUTHOR']) ?></h2>
+        <div class="grid gap-4">
+          <?php
+          $stmt = $pdo->prepare("SELECT * FROM books WHERE AUTHOR = ? AND TITLE != ? LIMIT 3");
+          $stmt->execute([$book['AUTHOR'], $book['TITLE']]);
+          foreach ($stmt as $b): ?>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
+              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+              📖 <?= htmlspecialchars($b['CALL NUMBER']) ?><br>
+              🏷 <?= htmlspecialchars($b['Sub_Category']) ?>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    </aside>
   </div>
-</section>
-
-  <!-- 📌 Related Books -->
-  <section class="mb-6">
-    <h2 class="text-lg font-semibold mb-2">📌 Because you viewed <em><?= htmlspecialchars($book['TITLE']) ?></em></h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <?php
-      $stmt = $pdo->prepare("SELECT * FROM books WHERE TITLE != ? AND MATCH(KEYWORDS) AGAINST(?) LIMIT 3");
-      $stmt->execute([$book['TITLE'], $book['KEYWORDS']]);
-      foreach ($stmt as $b): ?>
-        <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-gray-50">
-          <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-          👤 <?= htmlspecialchars($b['AUTHOR']) ?><br>
-          🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </section>
-
-  <!-- 🔥 Trending -->
-  <section class="mb-6">
-    <h2 class="text-lg font-semibold mb-2">🔥 Trending in <?= htmlspecialchars($book['General_Category']) ?></h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <?php
-      $stmt = $pdo->prepare("SELECT * FROM books WHERE General_Category = ? AND TITLE != ? ORDER BY `Like` DESC LIMIT 3");
-      $stmt->execute([$book['General_Category'], $book['TITLE']]);
-      foreach ($stmt as $b): ?>
-        <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-yellow-50">
-          <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-          👍 <?= $b['Like'] ?? 0 ?> likes<br>
-          🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </section>
-
-  <!-- ✍️ Other Works -->
-  <section class="mb-6">
-    <h2 class="text-lg font-semibold mb-2">✍️ Other Works by <?= htmlspecialchars($book['AUTHOR']) ?></h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <?php
-      $stmt = $pdo->prepare("SELECT * FROM books WHERE AUTHOR = ? AND TITLE != ? LIMIT 3");
-      $stmt->execute([$book['AUTHOR'], $book['TITLE']]);
-      foreach ($stmt as $b): ?>
-        <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-purple-50">
-          <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-          📖 <?= htmlspecialchars($b['CALL NUMBER']) ?><br>
-          🏷 <?= htmlspecialchars($b['Sub_Category']) ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </section>
-<?php endif; ?>
 </main>
 
 <?php require __DIR__ . '/footer.php'; ?>
