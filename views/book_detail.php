@@ -361,7 +361,6 @@ if (!$disableReserve && $currentReservation) {
             <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
               <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
               📖 <?= htmlspecialchars($b['CALL NUMBER']) ?><br>
-              🏷 <?= htmlspecialchars($b['Sub_Category']) ?>
             </a>
           <?php endforeach; ?>
         </div>
