@@ -64,7 +64,7 @@ def ask(question: str) -> dict:
 
     # 3️⃣ Short summary for seed
     short_summary = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{
             "role": "user",
             "content": f"Summarize the book summary in 2‑3 concise sentences.\n\nSummary:\n{top_summary}"
@@ -94,7 +94,7 @@ def ask(question: str) -> dict:
             continue
 
         rel_short = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4",
             messages=[{
                 "role": "user",
                 "content": (f'Summarize this book titled "{title_r}" in 2‑3 sentences:\n\n{summary_r}')
@@ -112,7 +112,7 @@ def ask(question: str) -> dict:
 
     # 5️⃣ Book-intro line
     book_intro = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{
             "role": "user",
             "content": (f'Briefly explain what the book titled "{top_title}" is about '
@@ -140,7 +140,7 @@ After answering, add this single line:
 f'For a deeper understanding, I recommend reading "{top_title}"{" by " + top_author if top_author != "Unknown" else ""} (Call Number: {top_call_no}). {book_intro}'
 """
     gpt_final = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{"role": "user", "content": gpt_prompt}],
         max_tokens=600,
         temperature=0.7,

@@ -1,11 +1,11 @@
 """
 Recommender for LIBRARY_DATA_FINAL_clean.csv
-Layer A : 1) specific Sub_Category + Gen‑Cat
-          2) keyword overlap
-          3) same General_Category
-          4) same call_prefix
-          5) semantic fallback
-Layer B : top‑liked in same General_Category (global fallback if empty)
+Updated for simplified 8-category structure: Non-Fiction, Children, Law, History, Fiction, Science, Art & Media, Culinary
+Layer A : 1) same General_Category
+          2) keyword overlap  
+          3) same call_prefix
+          4) semantic fallback
+Layer B : top‑liked in same General_Category (global fallback if empty)
 """
 
 from typing import List, Dict
@@ -20,11 +20,6 @@ class Recommender:
         self.df["Like"]    = self.df[like_col].fillna(0)
         self.df["Dislike"] = self.df["Dislike"].fillna(0)
 
-        # Pre‑compute sub‑category frequency (row share)
-        self._sub_freq = (
-            self.df["Sub_Category"].str.strip().str.lower().value_counts(normalize=True)
-        )
-
     # ──────────────────────────────────────────
     # Cosine‑similarity helper
     # ──────────────────────────────────────────
@@ -36,37 +31,29 @@ class Recommender:
             if hit["corpus_id"] != seed_idx and hit["score"] >= thresh
         ][:k]
 
-        # ──────────────────────────────────────────
-    # Layer A – content / metadata driven
+    # ──────────────────────────────────────────
+    # Layer A – content / metadata driven (simplified)
     # ──────────────────────────────────────────
     def _category_recs(self, seed_idx: int, k: int = 5) -> List[int]:
         seed     = self.df.iloc[seed_idx]
         gen_cat  = str(seed.get("General_Category", "")).strip().lower()
-        sub_cat  = str(seed.get("Sub_Category", "")).strip().lower()
         prefix   = str(seed.get("call_prefix", "")).strip().lower()
 
         kw_seed  = set(str(seed.get("Keywords", "")).lower().split(","))
         has_kw   = bool(kw_seed and kw_seed != {""})
 
-        # ── decide if sub_cat is “specific” ───────────────────────
-        sub_freq = self._sub_freq.get(sub_cat, 0.0)   # share 0‑1
-        use_sub  = (
-            sub_cat and sub_cat != gen_cat and sub_freq < 0.05
-        )
-
         chosen: List[int] = []
 
-        # 1️⃣ Specific Sub‑Category + same General_Category
-        if use_sub:
+        # 1️⃣ Same General_Category (broader matching with simplified categories)
+        if gen_cat:
             mask = (
-                (self.df["Sub_Category"].fillna("").str.lower() == sub_cat) &
                 (self.df["General_Category"].fillna("").str.lower() == gen_cat) &
                 (self.df.index != seed_idx)
             )
-            sub_df = self.df[mask].copy()
-            sub_df["pop"] = sub_df["Like"] - sub_df["Dislike"]
+            cat_df = self.df[mask].copy()
+            cat_df["pop"] = cat_df["Like"] - cat_df["Dislike"]
             chosen.extend(
-                sub_df.sort_values(["pop", "Like"], ascending=False)
+                cat_df.sort_values(["pop", "Like"], ascending=False)
                       .head(k).index
             )
 
@@ -81,20 +68,7 @@ class Recommender:
                 if len(chosen) == k:
                     break
 
-        # 3️⃣ Same General_Category
-        if len(chosen) < k and gen_cat:
-            rem  = k - len(chosen)
-            mask = (
-                self.df["General_Category"].fillna("").str.lower() == gen_cat
-            ) & (~self.df.index.isin(chosen + [seed_idx]))
-            cat_df = self.df[mask].copy()
-            cat_df["pop"] = cat_df["Like"] - cat_df["Dislike"]
-            chosen.extend(
-                cat_df.sort_values(["pop", "Like"], ascending=False)
-                      .head(rem).index
-            )
-
-        # 4️⃣ Same call_prefix
+        # 3️⃣ Same call_prefix
         if len(chosen) < k and prefix:
             rem  = k - len(chosen)
             mask = (
@@ -107,19 +81,19 @@ class Recommender:
                      .head(rem).index
             )
 
-        # 5️⃣ Semantic fallback  – accept **only** same‑category hits
+        # 4️⃣ Semantic fallback – accept **only** same‑category hits
         if len(chosen) < k:
             need  = k - len(chosen)
-            extra = self._similar(seed_idx, k=need * 3)   # cosine ≥ 0.40 already
+            extra = self._similar(seed_idx, k=need * 3)
             for idx in extra:
                 if idx in chosen:
                     continue
                 if self.df.at[idx, "General_Category"].strip().lower() != gen_cat:
-                    continue      # 🛑 skip different category
+                    continue
                 if has_kw:
                     kw_other = set(str(self.df.at[idx, "Keywords"]).lower().split(","))
                     if kw_seed and not (kw_seed & kw_other):
-                        continue  # optional keyword screen
+                        continue
                 chosen.append(idx)
                 if len(chosen) == k:
                     break
@@ -127,7 +101,7 @@ class Recommender:
         return chosen[:k]
 
     # ──────────────────────────────────────────
-    # Layer B – trending in same General_Category
+    # Layer B – trending in same General_Category
     # ──────────────────────────────────────────
     def _trending_in_cat(self, gen_cat: str, exclude: List[int], k: int = 5) -> List[int]:
         mask = (
@@ -186,7 +160,7 @@ class Recommender:
         }
 
     # ──────────────────────────────────────────
-    # Pretty printer
+    # Pretty printer (updated to remove Sub_Category)
     # ──────────────────────────────────────────
     def format_lines(self, indices: List[int], seed_idx: int) -> str:
         seed_vec = self.emb[seed_idx]
@@ -204,26 +178,26 @@ class Recommender:
 
     MAJOR_CATEGORY_MAP = {
         # Arts, Humanities, and Social Sciences
-        "AB Political Science": ["Politics", "Non-Fiction", "History", "Law"],
-        "AB Psychology": ["Psychology", "Social Science", "Non-Fiction"],
+        "AB Political Science": ["History", "Law", "Non-Fiction"],
+        "AB Psychology": ["Science", "Non-Fiction"],
         "BA Broadcasting": ["Art & Media", "Non-Fiction"],
         "BA History": ["History", "Non-Fiction"],
-        "BA Political Science": ["Politics", "Non-Fiction", "History", "Law"],
+        "BA Political Science": ["History", "Law", "Non-Fiction"],
 
         # Business & Economics
-        "BS Accountancy": ["Business & Career", "Economics", "Non-Fiction"],
-        "BS Management Accounting": ["Business & Career", "Economics", "Non-Fiction"],
-        "BSBA Financial Management": ["Business & Career", "Economics", "Non-Fiction"],
-        "BSBA Human Resource Management": ["Business & Career", "Non-Fiction"],
-        "BSBA Marketing Management": ["Business & Career", "Non-Fiction"],
-        "BS Entrepreneurship": ["Business & Career", "Non-Fiction"],
-        "BS Economics": ["Economics", "Business & Career", "Non-Fiction"],
+        "BS Accountancy": ["Non-Fiction"],
+        "BS Management Accounting": ["Non-Fiction"],
+        "BSBA Financial Management": ["Non-Fiction"],
+        "BSBA Human Resource Management": ["Non-Fiction"],
+        "BSBA Marketing Management": ["Non-Fiction"],
+        "BS Entrepreneurship": ["Non-Fiction"],
+        "BS Economics": ["Non-Fiction"],
 
         # Psychology
-        "BS Psychology": ["Psychology", "Social Science", "Non-Fiction"],
+        "BS Psychology": ["Science", "Non-Fiction"],
 
         # Engineering & Technology
-        "BS Architecture": ["Art & Media", "Science", "Craft"],
+        "BS Architecture": ["Art & Media", "Science"],
         "BS Civil Engineering": ["Science", "Non-Fiction"],
         "BS Computer Engineering": ["Science", "Non-Fiction"],
         "BS ECE": ["Science", "Non-Fiction"],
@@ -234,40 +208,39 @@ class Recommender:
         "BS Mechanical Engineering": ["Science", "Non-Fiction"],
 
         # Education
-        "BS Education": ["Education", "Non-Fiction"],
-        "BS Education Major in Filipino": ["Education", "Non-Fiction"],
-        "BS Education Major in Math": ["Education", "Science", "Non-Fiction"],
-        "BS Education Major in Science": ["Education", "Science", "Non-Fiction"],
-        "BS Education Major in Social Studies": ["Education", "History", "Non-Fiction"],
-        "BS Elementary Education": ["Education", "Non-Fiction"],
-        "BSE Filipino": ["Education", "Non-Fiction"],
-        "BSE Math": ["Education", "Science", "Non-Fiction"],
-        "BSE Science": ["Education", "Science", "Non-Fiction"],
-        "BSE Social Studies": ["Education", "History", "Non-Fiction"],
-        "BSED Filipino": ["Education", "Non-Fiction"],
-        "BSED ICT": ["Education", "Science", "Non-Fiction"],
-        "BSED Science": ["Education", "Science", "Non-Fiction"],
-        "BSES Social Studies": ["Education", "History", "Non-Fiction"],
+        "BS Education": ["Non-Fiction"],
+        "BS Education Major in Filipino": ["Non-Fiction"],
+        "BS Education Major in Math": ["Science", "Non-Fiction"],
+        "BS Education Major in Science": ["Science", "Non-Fiction"],
+        "BS Education Major in Social Studies": ["History", "Non-Fiction"],
+        "BS Elementary Education": ["Children", "Non-Fiction"],
+        "BSE Filipino": ["Non-Fiction"],
+        "BSE Math": ["Science", "Non-Fiction"],
+        "BSE Science": ["Science", "Non-Fiction"],
+        "BSE Social Studies": ["History", "Non-Fiction"],
+        "BSED Filipino": ["Non-Fiction"],
+        "BSED ICT": ["Science", "Non-Fiction"],
+        "BSED Science": ["Science", "Non-Fiction"],
+        "BSES Social Studies": ["History", "Non-Fiction"],
 
         # Health & Medical
-        "BS Dentistry": ["Health", "Science", "Non-Fiction"],
-        "BS Nursing": ["Health", "Science", "Non-Fiction"],
+        "BS Dentistry": ["Science", "Non-Fiction"],
+        "BS Nursing": ["Science", "Non-Fiction"],
 
         # Hospitality & Office Work
-        "BS Hospitality Management": ["Culinary", "Business & Career", "Non-Fiction"],
-        "BS Office Administration": ["Business & Career", "Non-Fiction"],
+        "BS Hospitality Management": ["Culinary", "Non-Fiction"],
+        "BS Office Administration": ["Non-Fiction"],
 
         # Specialized
-        "BTVTED Garments, Fashion and Design": ["Craft", "Art & Media", "Non-Fiction"],
+        "BTVTED Garments, Fashion and Design": ["Art & Media", "Non-Fiction"],
     }
 
-
     STRAND_CATEGORY_MAP = {
-        "ABM": ["Business & Career", "Economics"],
-        "STEM": ["Science", "Academic"],
-        "HUMSS": ["History", "Politics", "Social Science"],
-        "GAS": ["Non-Fiction", "Education"],
-        "TVL": ["Craft", "Culinary"],
+        "ABM": ["Non-Fiction"],
+        "STEM": ["Science"],
+        "HUMSS": ["History", "Non-Fiction"],
+        "GAS": ["Non-Fiction"],
+        "TVL": ["Culinary"],
         "Arts and Design": ["Art & Media"]
     }
 
@@ -282,8 +255,6 @@ class Recommender:
         # Filter the DataFrame based on the categories
         filtered_books = self.df[self.df['General_Category'].str.contains('|'.join(categories), na=False)]
         
-        # Get the top_n recommendations
-        recommendedBooks = filtered_books.nlargest(top_n, 'Like')[['TITLE', 'AUTHOR', 'General_Category', 'Sub_Category']]
+        recommendedBooks = filtered_books.nlargest(top_n, 'Like')[['TITLE', 'AUTHOR', 'General_Category']]
         
         return recommendedBooks.to_dict(orient='records')
-

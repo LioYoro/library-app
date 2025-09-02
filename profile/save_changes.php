@@ -47,9 +47,27 @@ if (!empty($_POST['password'])) {
     $params[] = $hashed;
 }
 
+if (isset($_POST['remove_picture']) && $_POST['remove_picture'] === '1') {
+    // Remove the profile picture by setting it to NULL
+    $updates[] = "profile_picture = ?";
+    $params[] = null;
+} 
 // Profile picture (if uploaded)
-if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
-    $ext = pathinfo($_FILES['profile_picture']['name'], PATHINFO_EXTENSION);
+elseif (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    $fileType = $_FILES['profile_picture']['type'];
+    
+    if (!in_array($fileType, $allowedTypes)) {
+        exit("Only JPEG and PNG files are allowed.");
+    }
+    
+    $ext = strtolower(pathinfo($_FILES['profile_picture']['name'], PATHINFO_EXTENSION));
+    $allowedExtensions = ['jpg', 'jpeg', 'png'];
+    
+    if (!in_array($ext, $allowedExtensions)) {
+        exit("Only JPEG and PNG files are allowed.");
+    }
+    
     $filename = 'pp_' . $userId . '_' . time() . '.' . $ext;
     $uploadDir = realpath(__DIR__ . '/../uploads');
 
