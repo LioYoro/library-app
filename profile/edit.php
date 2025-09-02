@@ -40,7 +40,8 @@ if (!$user) die("User not found.");
       <!-- Upload Input -->
       <div>
         <label for="profile_picture" class="block text-sm font-medium mb-1">Upload New Picture</label>
-        <input type="file" name="profile_picture" id="profile_picture" accept="image/*" class="block text-sm mb-1">
+        <!-- Restrict file input to only JPEG and PNG -->
+        <input type="file" name="profile_picture" id="profile_picture" accept=".jpg,.jpeg,.png" class="block text-sm mb-1">
         <p class="text-xs text-gray-500 mb-2">JPEG or PNG up to 2MB.</p>
         <!-- Hidden input to signal removal -->
         <input type="hidden" name="remove_picture" id="remove_picture" value="0">
@@ -373,7 +374,23 @@ profileForm.addEventListener("submit", async function (e) {
 document.querySelector('#profile_picture').addEventListener('change', function (e) {
   const file = e.target.files[0];
   const previewImg = document.getElementById('profilePreview');
+  
   if (file) {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Only JPEG and PNG files are allowed.');
+      e.target.value = ''; // Clear the input
+      return;
+    }
+    
+    // Validate file size (2MB limit)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB.');
+      e.target.value = ''; // Clear the input
+      return;
+    }
+    
     previewImg.src = URL.createObjectURL(file);
   } else {
     previewImg.src = '/library-app/assets/default_pp.png'; // Default image path

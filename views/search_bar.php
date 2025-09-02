@@ -16,20 +16,20 @@
       </button>
     </div>
     
-    <!-- Action Buttons -->
+    <!-- Action Buttons 
     <button type="button" class="search-btn">
       ASK <span style="font-size: 10px;">✦</span>
-    </button>
+    </button> -->
     
     <button id="advancedSearchBtn" type="button" class="search-btn">
-      ADVANCED SEARCH
+      ADVANCED SEARCH <span style="font-size: 10px;">✦</span>
     </button>
     
-    <a href="views/favorites.php" class="search-btn">
+    <a href="/library-app/views/favorites.php" class="search-btn">
       BOOKMARKS
     </a>
 
-    <a href="book_reservation/my_reservations.php" class="search-btn">
+    <a href="/library-app/book_reservation/my_reservations.php" class="search-btn">
     MY RESERVATIONS
     </a>
   </form>
@@ -41,45 +41,35 @@
   const standardBtn = document.getElementById('standardSearchBtn');
   const advancedBtn = document.getElementById('advancedSearchBtn');
 
-  // Standard search: submit to book_results.php
-  standardBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-    const value = input.value.trim();
-    if (value) {
-      form.action = "views/book_results.php";
-      form.method = "get";
-      form.submit();
-    }
-  });
+  advancedBtn.addEventListener('click', async function () {
+  const value = input.value.trim();
+  if (!value) return;
 
-  // Advanced search: submit to ask.php
-  advancedBtn.addEventListener('click', function () {
-    const value = input.value.trim();
-    if (value) {
-      // Create a temporary form for POST request
-      const tempForm = document.createElement('form');
-      tempForm.method = 'post';
-      tempForm.action = 'ask.php';
-      
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.name = 'question';
-      hiddenInput.value = value;
-      
-      tempForm.appendChild(hiddenInput);
-      document.body.appendChild(tempForm);
-      tempForm.submit();
-    }
-  });
+  // Show a temporary loading state
+  const tempBtn = advancedBtn;
+  const originalText = tempBtn.innerHTML;
+  tempBtn.innerHTML = 'Loading...';
+  tempBtn.disabled = true;
 
-  // Handle Enter key for standard search
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const value = input.value.trim();
-    if (value) {
-      form.action = "views/book_results.php";
-      form.method = "get";
-      form.submit();
-    }
-  });
+  try {
+    const formData = new FormData();
+    formData.append('question', value);
+
+    const res = await fetch('/library-app/ask.php', {
+      method: 'POST',
+      body: formData
+    });
+
+    const text = await res.text();
+    // Replace the page content or inject result
+    document.body.innerHTML = text;
+  } catch (err) {
+    alert('Error fetching answer.');
+    console.error(err);
+  } finally {
+    tempBtn.innerHTML = originalText;
+    tempBtn.disabled = false;
+  }
+});
+
 </script>
