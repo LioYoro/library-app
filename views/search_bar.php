@@ -1,6 +1,5 @@
 <div class="search-container">
-  <form id="searchForm" method="get">
-    <!-- Search Input Group -->
+  <form id="searchForm" method="get" action="/library-app/views/book_results.php">
     <div class="search-input-group">
       <button type="button">
         <i class="fas fa-filter"></i>
@@ -16,10 +15,9 @@
       </button>
     </div>
     
-    <!-- Action Buttons 
     <button type="button" class="search-btn">
       ASK <span style="font-size: 10px;">✦</span>
-    </button> -->
+    </button> 
     
     <button id="advancedSearchBtn" type="button" class="search-btn">
       ADVANCED SEARCH <span style="font-size: 10px;">✦</span>
@@ -41,35 +39,40 @@
   const standardBtn = document.getElementById('standardSearchBtn');
   const advancedBtn = document.getElementById('advancedSearchBtn');
 
-  advancedBtn.addEventListener('click', async function () {
-  const value = input.value.trim();
-  if (!value) return;
+  // The form action will handle the redirect to book_results.php
 
-  // Show a temporary loading state
-  const tempBtn = advancedBtn;
-  const originalText = tempBtn.innerHTML;
-  tempBtn.innerHTML = 'Loading...';
-  tempBtn.disabled = true;
+  advancedBtn.addEventListener('click', function () {
+    const value = input.value.trim();
+    if (!value) return;
 
-  try {
-    const formData = new FormData();
-    formData.append('question', value);
+    // Show loading state on button
+    const originalText = advancedBtn.innerHTML;
+    advancedBtn.innerHTML = 'Loading...';
+    advancedBtn.disabled = true;
 
-    const res = await fetch('/library-app/ask.php', {
-      method: 'POST',
-      body: formData
-    });
+    // Create a temporary form to submit to ask.php
+    const tempForm = document.createElement('form');
+    tempForm.method = 'POST';
+    tempForm.action = '/library-app/ask.php';
+    
+    const questionInput = document.createElement('input');
+    questionInput.type = 'hidden';
+    questionInput.name = 'question';
+    questionInput.value = value;
+    
+    tempForm.appendChild(questionInput);
+    document.body.appendChild(tempForm);
+    
+    // Submit the form (this will navigate to ask.php)
+    tempForm.submit();
+  });
 
-    const text = await res.text();
-    // Replace the page content or inject result
-    document.body.innerHTML = text;
-  } catch (err) {
-    alert('Error fetching answer.');
-    console.error(err);
-  } finally {
-    tempBtn.innerHTML = originalText;
-    tempBtn.disabled = false;
-  }
-});
-
+  form.addEventListener("submit", function (e) {
+    const value = input.value.trim();
+    if (!value) {
+      e.preventDefault();
+      return;
+    }
+    // Form will submit normally to book_results.php due to action attribute
+  });
 </script>

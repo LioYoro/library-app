@@ -51,7 +51,8 @@ foreach ($commentStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 $totalPages = ceil($totalBooks / $limit);
 ?>
 
-<?php require __DIR__ . '/search_bar.php'; ?> 
+<?php require __DIR__ . '/search_bar.php'; ?>
+
 <div class="container mx-auto px-4 py-6">
   <h2 class="text-lg font-semibold mb-4"><?= $totalBooks ?> Book(s) Found</h2>
 
@@ -66,7 +67,7 @@ $totalPages = ceil($totalBooks / $limit);
   <?php else: ?>
     <div class="results grid gap-4">
       <?php foreach ($books as $book): ?>
-        <a href="book_detail.php?title=<?= urlencode($book['TITLE']) ?>" 
+        <a href="/library-app/views/book_detail.php?title=<?= urlencode($book['TITLE']) ?>"
            class="card flex gap-4 p-4 border rounded-md bg-white shadow hover:shadow-md transition">
           <div class="thumbnail text-4xl">📘</div>
           <div class="info flex-1">
