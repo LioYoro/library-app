@@ -110,7 +110,12 @@ if (isset($_SESSION['user_id'])) {
 <body>
 <!-- Header -->
 <header style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-color: #000; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; color: white;">
-  <h2 class="logo" style="margin: 0;">ARK</h2>
+  <a href="/library-app/index.php" class="block no-underline">
+    <h2 class="logo" style="margin: 0; font-size: 1.25rem; color: inherit;">
+        Kaban ng Hiyas<br>Congressional Library
+    </h2>
+</a>
+
   <nav class="navigation" style="display: flex; align-items: center; gap: 30px;">
     <a href="/library-app/index.php" style="color: white; text-decoration: none;">Home</a>
     <a href="/library-app/views/events.php" style="color: white; text-decoration: none;">Events</a>

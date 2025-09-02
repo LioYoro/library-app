@@ -248,8 +248,37 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
     <!-- MAIN CONTENT SECTION -->
     <div style="display: block; width: 100%; margin-bottom: 40px;">
         <div class="flex flex-col md:flex-row gap-6" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+
+         <!-- LEFT Sidebar -->
+<div class="w-full md:w-1/5 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+    <h3 class="aside-title text-center font-bold">E-Resources</h3>
+
+    <div class="space-y-6 text-center">
+        <!-- First Image + Name -->
+        <a href="https://web.nlp.gov.ph/" target="_blank">
+        <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
+            <img src="EResources/NLPLogo.png"
+                alt="National Library of the Philippines"
+                class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
+            <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">National Library of the Philippines</p>
+        </div>
+        </a>
+
+        <!-- Second Image + Name -->
+        <a href="https://eportal.nlp.gov.ph/" target="_blank">
+  <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
+      <img src="EResources/NLPLogo.png"
+           alt="NLP E-Portal"
+           class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
+      <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">NLP E-Portal</p>
+  </div>
+</a>
+
+    </div>
+</div>
+
             <!-- Main Content Panel -->
-            <aside class="w-full md:w-2/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+            <aside class="w-full md:w-5/6 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
                 <?php
                 function getCommentCount($pdo, $title) {
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM comments WHERE book_title = ?");
@@ -264,11 +293,16 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <h2 class="section-title">Because you viewed: <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
                         <div class="book-grid">
                             <?php foreach ($recommendations as $b): ?>
-                                <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue">
+                               <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"class="book-card blue flex items-center gap-4 p-2">
+                                <img src="EResources/Noimage.jpg" 
+                                alt="Book cover" 
+                                class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                    <div class="flex flex-col">
                                     <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                     <div class="book-meta"><?php if (!empty($b['AUTHOR'])): ?><div><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?></div>
                                     <div class="book-meta"><?php if (!empty($b['CALL NUMBER'])): ?><div><strong><em>Call Number: </em></strong><?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?></div>
                                     <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                                </div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -279,10 +313,15 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <h2 class="section-title">Trending in <?= htmlspecialchars($viewedBook['General_Category']) ?></h2>
                         <div class="book-grid">
                             <?php foreach ($trending as $t): ?>
-                                <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow">
+                                <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow flex items-center gap-4 p-2">
+                                    <img src="EResources/Noimage.jpg" 
+                                    alt="Book cover" 
+                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                    <div class="flex flex-col">
                                     <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
                                     <?php if (!empty($t['CALL NUMBER'])): ?><div><?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
                                     <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+                                </div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -294,10 +333,15 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <h2 class="section-title">Other Works by <?= htmlspecialchars($viewedBook['AUTHOR']) ?></h2>
                             <div class="book-grid">
                                 <?php foreach ($otherWorks as $w): ?>
-                                    <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple">
+                                    <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple flex items-center gap-4 p-2">
+                                    <img src="EResources/Noimage.jpg" 
+                                    alt="Book cover" 
+                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                        <div class="flex flex-col">
                                         <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
                                         <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
                                         <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+                                    </div>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
@@ -312,10 +356,15 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <?php
                         $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
                         foreach ($stmt as $b): ?>
-                            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange">
+                            <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange flex items-center gap-4 p-2">
+                                    <img src="EResources/Noimage.jpg" 
+                                    alt="Book cover" 
+                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                <div class="flex flex-col">
                                 <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
                                 <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta"><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
                                 <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                            </div>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -323,7 +372,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
             </aside>
             
             <!-- RIGHT Sidebar (Aside) -->
-            <div class="w-full md:w-1/3 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+            <div class="w-full md:w-2/5 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <section class="aside-box" id="liked-section">
                         <h3 class="aside-title">Your Likes</h3>
