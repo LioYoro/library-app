@@ -7,8 +7,8 @@ function getCount($conn, $query) {
     return $row['count'];
 }
 
-// Current date for “As of”
-$reportDate = date('F d, Y'); // e.g., August 19, 2025
+// Current date for "As of"
+$reportDate = date('F d, Y');
 
 // 📊 Summary queries
 $totalBooks = getCount($conn, "SELECT COUNT(*) as count FROM books");
@@ -17,7 +17,6 @@ $duplicateTitles = getCount($conn, "SELECT COUNT(*) AS count FROM (SELECT TITLE 
 $uniqueAuthors = getCount($conn, "SELECT COUNT(DISTINCT AUTHOR) as count FROM books");
 $duplicateAuthors = getCount($conn, "SELECT COUNT(*) AS count FROM (SELECT AUTHOR FROM books GROUP BY AUTHOR HAVING COUNT(*) > 1) AS duplicates");
 $uniqueCategories = getCount($conn, "SELECT COUNT(DISTINCT General_Category) as count FROM books");
-$uniqueSubCategories = getCount($conn, "SELECT COUNT(DISTINCT Sub_Category) as count FROM books");
 $booksLastMonth = getCount($conn, "
     SELECT COUNT(*) as count FROM books
     WHERE DATE_ADDED >= DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%m-01')
@@ -51,142 +50,265 @@ while ($row = mysqli_fetch_assoc($res)) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Book Summary</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 2rem; }
-    .summary-box {
-      background: #f8f9fa; border: 1px solid #ddd; padding: 10px 15px;
-      border-radius: 8px; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .btn {
-      padding: 10px 20px; background-color: #007BFF; color: white;
-      border: none; border-radius: 4px; cursor: pointer; text-decoration: none;
-    }
-    .btn:hover { background-color: #0056b3; }
-    .summary-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-    canvas { margin: 20px 0; max-width: 800px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .charts-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex: 1;
+            min-height: 500px;
+        }
+
+        .chart-card h3 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .chart-card h4 {
+            margin: 20px 0 10px 0;
+            color: #34495e;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .summary-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .summary-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .summary-list li:last-child {
+            border-bottom: none;
+        }
+
+        .pie-legend {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 0 0;
+        }
+
+        .pie-legend li {
+            padding: 8px 0;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .charts-row {
+                flex-direction: column;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-  <h1>📚 Book Summary</h1>
-  <div style="margin-bottom:10px; font-size:0.9em; color:#555;">
-      🔒 <strong>As of:</strong> <?= $reportDate ?>
-  </div>
-
-  <a href="../books.php" class="btn">BACK</a>
-  
-  <div class="summary-container">
-    <div class="summary-box">📘 <strong>Total Books:</strong> <?= $totalBooks ?></div>
-    <div class="summary-box">📖 <strong>Unique Titles:</strong> <?= $uniqueTitles ?></div>
-    <div class="summary-box">📄 <strong>Duplicate Titles:</strong> <?= $duplicateTitles ?></div>
-    <div class="summary-box">👤 <strong>Unique Authors:</strong> <?= $uniqueAuthors ?></div>
-    <div class="summary-box">👥 <strong>Duplicate Authors:</strong> <?= $duplicateAuthors ?></div>
-    <div class="summary-box">🏷️ <strong>General Categories:</strong> <?= $uniqueCategories ?></div>
-    <div class="summary-box">🗂️ <strong>Subcategories:</strong> <?= $uniqueSubCategories ?></div>
-    <div class="summary-box">📅 <strong>Books Added Last Month:</strong> <?= $booksLastMonth ?></div>
-    <div class="summary-box">🆕 <strong>Books Added Since Last Report:</strong> <?= $booksSinceReport ?></div>
-  </div>
-
-<!-- Generate Report Button with Dropdown -->
-<div style="position: relative; display: inline-block;">
-    <button id="reportBtn" type="button" 
-        style="background-color: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer;">
-        GENERATE BOOKS REPORT ▼
-    </button>
-    <div id="reportDropdown" 
-        style="display: none; position: absolute; background: white; border: 1px solid #ccc; margin-top: 5px; z-index: 1000;">
-        <a href="generate_report.php?format=pdf" 
-           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📄 Download PDF</a>
-        <a href="generate_report.php?format=excel" 
-           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📊 Download Excel</a>
+    <!-- 📈 Books Added Per Month and 🥧 Books per Category (side by side) -->
+    <div class="charts-row">
+        <div class="chart-card line-card">
+            <h3>📈 Books Added Per Month</h3>
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+            <h4>Library Summary</h4>
+            <ul class="summary-list">
+                <li>📘 Total Books: <?= $totalBooks ?></li>
+                <li>📖 Unique Titles: <?= $uniqueTitles ?></li>
+                <li>📄 Duplicate Titles: <?= $duplicateTitles ?></li>
+                <li>👤 Unique Authors: <?= $uniqueAuthors ?></li>
+                <li>👥 Duplicate Authors: <?= $duplicateAuthors ?></li>
+                <li>🏷️ General Categories: <?= $uniqueCategories ?></li>
+                <li>📅 Books Added Last Month: <?= $booksLastMonth ?></li>
+                <li>🆕 Books Added Since Last Report: <?= $booksSinceReport ?></li>
+            </ul>
+            
+            <!-- Generate Report Section -->
+            <div style="margin-top: 20px;">
+                <!-- Generate Report Button with Dropdown -->
+                <div style="position: relative; display: inline-block;">
+                    <button id="reportBtn" type="button" 
+                        style="background-color: #007bff; color: white; padding: 10px 15px; border: none; cursor: pointer; border-radius: 5px; font-size: 0.9em;">
+                        GENERATE BOOKS REPORT ▼
+                    </button>
+                    <div id="reportDropdown" 
+                        style="display: none; position: absolute; background: white; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 150px;">
+                        <a href="generate_report.php?format=pdf" 
+                           style="display: block; padding: 8px 12px; text-decoration: none; color: black; border-bottom: 1px solid #eee;">📄 Download PDF</a>
+                        <a href="generate_report.php?format=excel" 
+                           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📊 Download Excel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-card pie-card">
+            <h3>🥧 Books per Category</h3>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <ul class="pie-legend" id="categoryLegend">
+                <!-- Legend will be populated by JavaScript -->
+            </ul>
+        </div>
     </div>
-</div>
 
-<!-- Unified Full Report Button -->
-<div style="position: relative; display: inline-block; margin-left:10px;">
-    <button id="fullReportBtn" type="button"
-        style="background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer;">
-        UNIFIED FULL REPORT WITH BOOK RESERVATION DATA ▼
-    </button>
-    <div id="fullReportDropdown"
-        style="display: none; position: absolute; background: white; border: 1px solid #ccc; margin-top: 5px; z-index: 1000;">
-        <a href="full_report.php?format=pdf"
-           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📄 Download PDF</a>
-        <a href="full_report.php?format=excel"
-           style="display: block; padding: 8px 12px; text-decoration: none; color: black;">📊 Download Excel</a>
-    </div>
-</div>
+    <script>
+        // Real data from PHP database
+        const monthlyChartData = {
+            labels: <?= json_encode(array_column($monthlyData, 'month')) ?>,
+            datasets: [{
+                label: 'Books Added',
+                data: <?= json_encode(array_column($monthlyData, 'total')) ?>,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        };
 
-<script>
-document.getElementById("fullReportBtn").addEventListener("click", function(e){
-    e.preventDefault();
-    const dropdown = document.getElementById("fullReportDropdown");
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-});
-window.addEventListener("click", function(e){
-    if(!e.target.closest("#fullReportBtn") && !e.target.closest("#fullReportDropdown")){
-        document.getElementById("fullReportDropdown").style.display = "none";
-    }
-});
-</script>
+        const categoryChartData = {
+            labels: <?= json_encode(array_column($categoryData, 'General_Category')) ?>,
+            datasets: [{
+                data: <?= json_encode(array_column($categoryData, 'total')) ?>,
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40',
+                    '#FF8C69',
+                    '#C9CBCF',
+                    '#8FBC8F',
+                    '#DDA0DD',
+                    '#F0E68C',
+                    '#87CEEB'
+                ]
+            }]
+        };
 
+        // Create line chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: monthlyChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                }
+            }
+        });
 
-<script>
-document.getElementById("reportBtn").addEventListener("click", function(e) {
-    e.preventDefault(); // ✅ stops form submission or page reload
-    const dropdown = document.getElementById("reportDropdown");
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-});
+        // Create pie chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'pie',
+            data: categoryChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
 
-// Close dropdown when clicking outside
-window.addEventListener("click", function(e) {
-    if (!e.target.closest("#reportBtn") && !e.target.closest("#reportDropdown")) {
-        document.getElementById("reportDropdown").style.display = "none";
-    }
-});
-</script>
+        // Generate custom legend with real data
+        const legendContainer = document.getElementById('categoryLegend');
+        categoryChartData.labels.forEach((label, index) => {
+            const li = document.createElement('li');
+            const colorBox = document.createElement('div');
+            colorBox.className = 'legend-color';
+            colorBox.style.backgroundColor = categoryChartData.datasets[0].backgroundColor[index];
+            
+            li.appendChild(colorBox);
+            li.appendChild(document.createTextNode(`${label}: ${categoryChartData.datasets[0].data[index]} books`));
+            legendContainer.appendChild(li);
+        });
 
-  <h2>📊 Charts</h2>
+        // Report dropdown functionality
+        document.getElementById("reportBtn").addEventListener("click", function(e) {
+            e.preventDefault();
+            const dropdown = document.getElementById("reportDropdown");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        });
 
-  <h3>Books per Category</h3>
-  <canvas id="categoryChart"></canvas>
-
-  <h3>Books Added Per Month</h3>
-  <canvas id="monthlyChart"></canvas>
-
-  <script>
-    const categoryLabels = <?= json_encode(array_column($categoryData, 'General_Category')) ?>;
-    const categoryCounts = <?= json_encode(array_column($categoryData, 'total')) ?>;
-    new Chart(document.getElementById('categoryChart'), {
-      type: 'bar',
-      data: {
-        labels: categoryLabels,
-        datasets: [{
-          label: 'Books per Category',
-          data: categoryCounts,
-          backgroundColor: 'skyblue'
-        }]
-      }
-    });
-
-    const monthLabels = <?= json_encode(array_column($monthlyData, 'month')) ?>;
-    const monthCounts = <?= json_encode(array_column($monthlyData, 'total')) ?>;
-    new Chart(document.getElementById('monthlyChart'), {
-      type: 'line',
-      data: {
-        labels: monthLabels,
-        datasets: [{
-          label: 'Books Added',
-          data: monthCounts,
-          borderColor: 'blue',
-          fill: false
-        }]
-      }
-    });
-  </script>
-
+        // Close dropdown when clicking outside
+        window.addEventListener("click", function(e) {
+            if (!e.target.closest("#reportBtn") && !e.target.closest("#reportDropdown")) {
+                document.getElementById("reportDropdown").style.display = "none";
+            }
+        });
+    </script>
 </body>
 </html>

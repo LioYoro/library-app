@@ -131,6 +131,70 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 venv\Scripts\activate
 cd recommender_service
 python app.py
+
+----------------------------------------------------
+## ✅ Standard Workflow
+----------------------------------------------------
+
+### 1. Make sure you’re on the latest version (always pull first)
+```
+git pull origin main
+```
+### 2. Stage your changes (after coding/editing files)
+```
+git add .
+```
+### 3. Commit your work
+```
+git commit -m "Describe what you changed here"
+```
+### 4. Push to GitHub
+```
+git push origin main
+```
+
+----------------------------------------------------
+## 🚩 Common Issues & Fixes
+----------------------------------------------------
+
+### 1. Accidentally committed venv/ or big files (GitHub rejects files over 100 MB)
+```
+git rm -r --cached venv
+echo "venv/" >> .gitignore
+git add .gitignore
+git commit -m "Remove venv from tracking"
+git push origin main
+```
+
+### 2. “non-fast-forward” error when pushing (someone else pushed first)
+```
+git pull origin main --rebase
+git push origin main
+```
+### 3. Force push (ONLY if rewriting history, e.g. cleaning venv/big files)
+❌ Do NOT use for normal updates
+```
+git push origin main --force
+```
+
+## ⚙️ Running the Python Recommender Service
+
+### First-time setup (only once):
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Every time you need to run it:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+venv\Scripts\activate
+cd recommender_service
+python app.py
 ```
 
 Then proceed to **Step 4 (open in browser)**.
