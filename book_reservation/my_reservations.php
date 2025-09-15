@@ -5,7 +5,7 @@ require_once __DIR__ . '/../views/header.php'; // load header first
 $userId = $_SESSION['user_id'] ?? null;
 if (!$userId) {
     echo "<div class='max-w-3xl mx-auto px-4 py-8'>";
-    echo "<p class='text-red-600 font-semibold p-4 bg-red-50 border-l-4 border-red-400'>You must be logged in to view your reservations.</p>";
+    echo "<p class='text-red-600 font-semibold p-4 bg-red-50 border-l-4 border-red-400'>You must be logged in to view your borrow requests.</p>";
     echo "</div>";
     require_once __DIR__ . '/../views/footer.php';
     exit;
@@ -92,12 +92,12 @@ try {
 ?>
 
 <main class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-4">📌 My Reservations</h1>
+    <h1 class="text-2xl font-bold mb-4">📌 My Borrowing List</h1>
 
     <!-- Reservation note -->
     <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800">
-        <p>ℹ️ You can reserve a maximum of 3 books at a time, and you can only reserve a book once.</p>
-        <p>Currently, you have <strong><?= $activeReservations ?></strong> active reservation<?= $activeReservations === 1 ? '' : 's' ?>.</p>
+        <p>ℹ️ You can borrow a maximum of 3 books at a time, and you can only borrow a book once.</p>
+        <p>Currently, you have <strong><?= $activeReservations ?></strong> active borrow request<?= $activeReservations === 1 ? '' : 's' ?>.</p>
     </div>
 
     <!-- Filter dropdown -->
@@ -116,7 +116,7 @@ try {
     </div>
 
     <?php if (!$reservations): ?>
-        <p>You have no reservations<?= $filter ? " that has been marked as '$filter'" : '' ?>.</p>
+        <p>You have no borrow requests<?= $filter ? " that has been marked as '$filter'" : '' ?>.</p>
     <?php else: ?>
         <div class="grid gap-4">
             <?php foreach ($reservations as $r): ?>
@@ -190,8 +190,8 @@ try {
 <!-- Cancel Confirmation Modal -->
 <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-lg font-bold mb-4">Cancel Reservation</h2>
-        <p class="mb-6" id="modalMessage">Are you sure you want to cancel this reservation?</p>
+        <h2 class="text-lg font-bold mb-4">Cancel Borrow Request</h2>
+        <p class="mb-6" id="modalMessage">Are you sure you want to cancel this request?</p>
         <div class="flex justify-end gap-4">
             <button id="modalCancel" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">No</button>
             <form id="modalForm" method="post" action="cancel_reservation.php">

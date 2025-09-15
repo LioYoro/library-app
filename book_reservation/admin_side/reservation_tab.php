@@ -1,6 +1,6 @@
 <?php
 session_start();
-$pageTitle = "Manage Reservations";
+$pageTitle = "Manage Book Borrow Requests";
 
 // Include database connection
 include('../../includes/db.php'); // Adjust path as needed

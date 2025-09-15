@@ -151,16 +151,6 @@ if ($userId) {
 }
 ?>
 
-<?php if ($userId): ?>
-  <form method="post" class="mb-4">
-    <input type="hidden" name="favorite_action" value="<?= $isFavorited ? 'unfavorite' : 'favorite' ?>">
-    <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
-    <button type="submit" class="text-sm px-3 py-1 rounded <?= $isFavorited ? 'bg-red-500 text-white' : 'bg-gray-200 text-black hover:bg-gray-300' ?>">
-      <?= $isFavorited ? '🗑 Remove from Favorites' : '❤️ Add to Favorites' ?>
-    </button>
-  </form>
-<?php endif; ?>
-
 <?php require __DIR__ . '/search_bar.php'; ?>
 <main class="max-w-6xl mx-auto px-4 py-8">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -171,22 +161,49 @@ if ($userId) {
         <?php if (!$book): ?>
           <p class="text-red-600 font-semibold">Book not found.</p>
         <?php else: ?>
-          <!-- 📖 Book Title & Info -->
-          <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($book['TITLE']) ?></h1>
-          <p class="text-sm text-gray-600 mb-4">
-            👤 <strong>Author:</strong> <?= htmlspecialchars($book['AUTHOR']) ?><br>
-            🔖 <strong>Call Number:</strong> <?= htmlspecialchars($book['CALL NUMBER']) ?><br>
-            📚 <strong>Accession No.:</strong> <?= htmlspecialchars($book['ACCESSION NO.']) ?><br>
-            🏷 <strong>General Category:</strong> <?= htmlspecialchars($book['General_Category']) ?><br>
-            🔖 <strong>Sub-Category:</strong> <?= htmlspecialchars($book['Sub_Category']) ?><br>
-            🧠 <strong>Keywords:</strong> <?= htmlspecialchars($book['KEYWORDS']) ?>
-          </p>
+          <!-- 📖 Book Title & Info with Cover -->
+          <div class="flex gap-6 items-start mb-6">
+            
+            <!-- LEFT: Title + Info -->
+            <div class="flex-1">
+              <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($book['TITLE']) ?></h1>
+
+              <p class="text-sm text-gray-600">
+                👤 <strong>Author:</strong> <?= htmlspecialchars($book['AUTHOR']) ?><br>
+                🔖 <strong>Call Number:</strong> <?= htmlspecialchars($book['CALL NUMBER']) ?><br>
+                📚 <strong>Accession No.:</strong> <?= htmlspecialchars($book['ACCESSION NO.']) ?><br>
+                🏷 <strong>General Category:</strong> <?= htmlspecialchars($book['General_Category']) ?><br>
+                🧠 <strong>Keywords:</strong> <?= htmlspecialchars($book['KEYWORDS']) ?>
+              </p>
+            </div>
+
+            <!-- RIGHT: Book Cover -->
+            <div>
+              <img src="<?= !empty($book['cover_image_url']) 
+                            ? '../' . htmlspecialchars($book['cover_image_url']) 
+                            : '../assets/Noimage.jpg' ?>" 
+                  alt="Book cover" 
+                  class="w-40 h-56 object-cover rounded-lg shadow-md">
+            </div>
+
+          </div>
+
 
           <!-- 📘 Summary -->
           <div class="bg-gray-50 border rounded p-4 text-gray-800 mb-6">
             <h2 class="font-semibold mb-2">📘 Summary</h2>
             <p class="text-sm leading-relaxed whitespace-pre-line"><?= nl2br(htmlspecialchars($book['SUMMARY'])) ?></p>
           </div>
+
+          <?php if ($userId): ?>
+            <form method="post" class="mb-4">
+              <input type="hidden" name="favorite_action" value="<?= $isFavorited ? 'unfavorite' : 'favorite' ?>">
+              <input type="hidden" name="book_title" value="<?= htmlspecialchars($book['TITLE']) ?>">
+              <button type="submit" class="text-sm px-3 py-1 rounded <?= $isFavorited ? 'bg-red-500 text-white' : 'bg-gray-200 text-black hover:bg-gray-300' ?>">
+                <?= $isFavorited ? '🗑 Remove from Favorites' : '❤️ Add to Favorites' ?>
+              </button>
+            </form>
+          <?php endif; ?>
 
           <!-- 👍👎 Votes -->
           <div class="flex gap-4 mb-6">
@@ -227,7 +244,7 @@ switch ($book['status']) {
         $reservationMessage = "❌ Book Unavailable";
         break;
     case 'reserved':
-        $reservationMessage = "⚠️ Book Reserved by Walk-in";
+        $reservationMessage = "⚠️ Book Borrowed by Walk-in";
         break;
 }
 
@@ -249,15 +266,15 @@ if (!$disableReserve && $currentReservation) {
         if ($currentReservation['user_id'] == $userId) {
             $reservationMessage = "✅ You have borrowed this book via reservation";
         } else {
-            $reservationMessage = "⚠️ Book Already Borrowed via Reservation";
+            $reservationMessage = "⚠️ Book Already Borrowed";
         }
     } elseif ($currentReservation['status'] === 'pending') {
         if ($currentReservation['user_id'] == $userId) {
             $disableReserve = true;
-            $reservationMessage = "⏳ You already have a pending reservation for this book";
+            $reservationMessage = "⏳ You already have a pending borrow request for this book.";
         } else {
             $disableReserve = true;
-            $reservationMessage = "⏳ This book has a pending reservation by another user. Please try again later.";
+            $reservationMessage = "⏳ Another user has already requested to borrow this book. Please try again later.";
         }
     }
 }
@@ -265,7 +282,7 @@ if (!$disableReserve && $currentReservation) {
 ?>
 
 <div class="mb-6 p-4 border rounded bg-white shadow">
-    <h2 class="font-semibold mb-2">📖 Book Reservation Status</h2>
+    <h2 class="font-semibold mb-2">📖 Book Borrowing Status</h2>
 
     <?php if ($reservationMessage): ?>
         <p class="<?= $book['status'] === 'Borrowed' ? 'text-red-600' : 'text-yellow-600' ?> font-bold">
@@ -280,11 +297,11 @@ if (!$disableReserve && $currentReservation) {
             <button type="submit" 
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 <?= $disableReserve ? 'disabled' : '' ?>>
-                📌 Reserve Book
+                📌 Borrow Book
             </button>
         </form>
     <?php else: ?>
-        <p class="text-sm text-gray-600">🔒 <a href="../login/login.php" class="text-blue-600 underline">Log in</a> to reserve this book.</p>
+        <p class="text-sm text-gray-600">🔒 Log in to borrow this book.</p>
     <?php endif; ?>
 </div>
 
@@ -298,7 +315,7 @@ if (!$disableReserve && $currentReservation) {
                 <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">Post Comment</button>
               </form>
             <?php else: ?>
-              <p class="text-sm text-gray-600 mb-3">🔒 <a href="../login/login.php" class="text-blue-600 underline">Log in</a> to comment or like/dislike.</p>
+              <p class="text-sm text-gray-600 mb-3">🔒 Log in to comment or like/dislike.</p>
             <?php endif; ?>
 
             <?php foreach ($comments as $c): ?>
@@ -324,10 +341,17 @@ if (!$disableReserve && $currentReservation) {
           $stmt = $pdo->prepare("SELECT * FROM books WHERE TITLE != ? AND MATCH(KEYWORDS) AGAINST(?) LIMIT 3");
           $stmt->execute([$book['TITLE'], $book['KEYWORDS']]);
           foreach ($stmt as $b): ?>
-            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
-              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-              👤 <?= htmlspecialchars($b['AUTHOR']) ?><br>
-              🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="flex gap-3 items-center border rounded hover:shadow-md p-3 bg-white">
+              <img src="<?= !empty($b['cover_image_url']) 
+                        ? '../' . htmlspecialchars($b['cover_image_url']) 
+                        : '../assets/Noimage.jpg' ?>" 
+              alt="Book cover" 
+              class="w-12 h-16 object-cover rounded shadow">
+              <div>
+                <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+                👤 <?= htmlspecialchars($b['AUTHOR']) ?><br>
+                🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+              </div>
             </a>
           <?php endforeach; ?>
         </div>
@@ -341,10 +365,18 @@ if (!$disableReserve && $currentReservation) {
           $stmt = $pdo->prepare("SELECT * FROM books WHERE General_Category = ? AND TITLE != ? ORDER BY `Like` DESC LIMIT 3");
           $stmt->execute([$book['General_Category'], $book['TITLE']]);
           foreach ($stmt as $b): ?>
-            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
-              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-              👍 <?= $b['Like'] ?? 0 ?> likes<br>
-              🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="flex gap-3 items-center border rounded hover:shadow-md p-3 bg-white">
+              <img src="<?= !empty($b['cover_image_url']) 
+                        ? '../' . htmlspecialchars($b['cover_image_url']) 
+                        : '../assets/Noimage.jpg' ?>" 
+              alt="Book cover" 
+              class="w-12 h-16 object-cover rounded shadow">
+
+              <div>
+                <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+                👍 <?= $b['Like'] ?? 0 ?> likes<br>
+                🔖 <?= htmlspecialchars($b['CALL NUMBER']) ?>
+              </div>
             </a>
           <?php endforeach; ?>
         </div>
@@ -358,9 +390,16 @@ if (!$disableReserve && $currentReservation) {
           $stmt = $pdo->prepare("SELECT * FROM books WHERE AUTHOR = ? AND TITLE != ? LIMIT 3");
           $stmt->execute([$book['AUTHOR'], $book['TITLE']]);
           foreach ($stmt as $b): ?>
-            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="block border rounded hover:shadow-md p-3 bg-white">
-              <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
-              📖 <?= htmlspecialchars($b['CALL NUMBER']) ?><br>
+            <a href="book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="flex gap-3 items-center border rounded hover:shadow-md p-3 bg-white">
+              <img src="<?= !empty($b['cover_image_url']) 
+                        ? '../' . htmlspecialchars($b['cover_image_url']) 
+                        : '../assets/Noimage.jpg' ?>" 
+              alt="Book cover" 
+              class="w-12 h-16 object-cover rounded shadow">
+              <div>
+                <strong><?= htmlspecialchars($b['TITLE']) ?></strong><br>
+                📖 <?= htmlspecialchars($b['CALL NUMBER']) ?><br>
+              </div>
             </a>
           <?php endforeach; ?>
         </div>

@@ -74,7 +74,7 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
 <!-- Quick Stats -->
 <div class="summary-boxes">
     <div class="summary-box">
-        <strong>Total Reservations</strong>
+        <strong>Total Borrow Requests</strong>
         <p><?= $totalReservations ?></p>
     </div>
     <div class="summary-box">
@@ -109,7 +109,7 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
 </div>
 
 <!-- Top Reserved Books -->
-<h2>Top Reserved Books</h2>
+<h2>Top Requested Books</h2>
 <div class="book-list">
     <?php foreach($topReserved as $r): ?>
         <div class="book-item">
@@ -119,7 +119,7 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
                 </span>
                 <span class="book-callnumber"><?= htmlspecialchars($r['call_number']) ?></span>
             </div>
-            <span class="book-count"><?= $r['total_reservations'] ?> reservations</span>
+            <span class="book-count"><?= $r['total_reservations'] ?> requests</span>
         </div>
     <?php endforeach; ?>
 </div>

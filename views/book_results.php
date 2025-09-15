@@ -167,26 +167,39 @@ $totalPages = ceil($totalBooks / $limit);
       <!-- Results -->
       <div class="results space-y-6">
         <?php foreach ($books as $book): ?>
-          <div class="result">
-            <!-- Title -->
-            <a href="/library-app/views/book_detail.php?title=<?=urlencode($book['TITLE'])?>" 
-               class="text-blue-700 font-semibold hover:underline text-lg">
-              <?= htmlspecialchars($book['TITLE']) ?>
-            </a>
-            <!-- Meta -->
-            <div class="text-sm text-gray-600">
-              <?= htmlspecialchars($book['AUTHOR'] ?? 'Unknown') ?> · 
-              <?= htmlspecialchars($book['DATE ACQUIRED'] ?? 'N/A') ?> · 
-              <?= htmlspecialchars($book['General_Category'] ?? 'Uncategorized') ?>
+          <div class="result flex gap-4 items-start border-b pb-4">
+            
+            <!-- Book Cover -->
+            <div class="thumbnail">
+              <img src="<?= !empty($book['cover_image_url']) 
+                            ? '../' . htmlspecialchars($book['cover_image_url']) 
+                            : '../assets/Noimage.jpg' ?>" 
+                  alt="Book cover" 
+                  class="w-16 h-24 object-cover rounded shadow">
             </div>
-            <!-- Summary -->
-            <div class="text-sm text-gray-800 mt-1">
-              <?= htmlspecialchars(substr($book['SUMMARY'] ?? 'No summary available.', 0, 250)) ?>...
-            </div>
-            <!-- Stats -->
-            <div class="text-xs text-gray-500 mt-1">
-              👍 <?= $book['Like'] ?? 0 ?> | 👎 <?= $book['Dislike'] ?? 0 ?> | 
-              💬 <?= $commentCounts[$book['TITLE']] ?? 0 ?> comment<?= ($commentCounts[$book['TITLE']] ?? 0) == 1 ? '' : 's' ?>
+
+            <!-- Book Info -->
+            <div class="flex-1">
+              <!-- Title -->
+              <a href="/library-app/views/book_detail.php?title=<?=urlencode($book['TITLE'])?>" 
+                class="text-blue-700 font-semibold hover:underline text-lg">
+                <?= htmlspecialchars($book['TITLE']) ?>
+              </a>
+              <!-- Meta -->
+              <div class="text-sm text-gray-600">
+                <?= htmlspecialchars($book['AUTHOR'] ?? 'Unknown') ?> · 
+                <?= htmlspecialchars($book['DATE ACQUIRED'] ?? 'N/A') ?> · 
+                <?= htmlspecialchars($book['General_Category'] ?? 'Uncategorized') ?>
+              </div>
+              <!-- Summary -->
+              <div class="text-sm text-gray-800 mt-1">
+                <?= htmlspecialchars(substr($book['SUMMARY'] ?? 'No summary available.', 0, 250)) ?>...
+              </div>
+              <!-- Stats -->
+              <div class="text-xs text-gray-500 mt-1">
+                👍 <?= $book['Like'] ?? 0 ?> | 👎 <?= $book['Dislike'] ?? 0 ?> | 
+                💬 <?= $commentCounts[$book['TITLE']] ?? 0 ?> comment<?= ($commentCounts[$book['TITLE']] ?? 0) == 1 ? '' : 's' ?>
+              </div>
             </div>
           </div>
         <?php endforeach; ?>

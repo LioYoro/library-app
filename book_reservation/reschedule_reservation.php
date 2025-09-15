@@ -98,7 +98,7 @@ require __DIR__ . '/../views/header.php';
 ?>
 
 <main class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-4">🕐 Reschedule Reservation</h1>
+    <h1 class="text-2xl font-bold mb-4">🕐 Reschedule Borrow Request</h1>
 
     <?php if ($error): ?>
         <p class="text-red-600 font-bold mb-4"><?= htmlspecialchars($error) ?></p>
@@ -161,7 +161,7 @@ require __DIR__ . '/../views/header.php';
                 <p><strong>⏰ Expiry Time:</strong> <?= date('g:i A', strtotime($reservation['expiry_time'])) ?></p>
                 <div class="flex gap-3 pt-4">
                     <a href="my_reservations.php" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 text-center">
-                        ✅ Back to My Reservations
+                        ✅ Back to My Borrow Requests
                     </a>
                 </div>
             </div>

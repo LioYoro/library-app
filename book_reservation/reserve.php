@@ -113,7 +113,7 @@ require __DIR__ . '/../views/header.php';
 
 <main class="max-w-2xl mx-auto px-4 py-8">
 <div class="bg-white rounded-lg shadow-md p-6">
-  <h1 class="text-2xl font-bold mb-6 text-center">📖 Reserve Book</h1>
+  <h1 class="text-2xl font-bold mb-6 text-center">📖 Borrow Book</h1>
 
   <!-- Book Information -->
   <div class="bg-gray-50 rounded-lg p-4 mb-6">
@@ -127,7 +127,7 @@ require __DIR__ . '/../views/header.php';
 
   <!-- User Reservation Note -->
   <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-      <p class="text-sm">ℹ️ You can only reserve one copy of a book at a time, and up to <strong>3 active reservations</strong> at once.</p>
+      <p class="text-sm">ℹ️ You can only borrow one copy of a book at a time, and up to <strong>3 active borrow requests</strong> at once.</p>
   </div>
 
   <?php if ($book['status'] === 'Borrowed'): ?>
@@ -181,7 +181,7 @@ require __DIR__ . '/../views/header.php';
                 </select>
           </div>
           <div class="flex gap-3 pt-4">
-              <button type="submit" name="submit_reservation" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"> 📌 Submit Reservation </button>
+              <button type="submit" name="submit_reservation" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"> 📌 Submit Borrow Request </button>
               <a href="../views/book_detail.php?title=<?= urlencode($bookTitle) ?>" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 text-center"> Cancel </a>
           </div>
       </form>
@@ -197,7 +197,7 @@ document.getElementById('pickup_date').addEventListener('input', function() {
     tomorrow.setDate(today.getDate() + 1);
 
     if (selectedDate.toDateString() !== today.toDateString() && selectedDate.toDateString() !== tomorrow.toDateString()) {
-        alert('You can only reserve for today or tomorrow.');
+        alert('You can only request to borrow for today or tomorrow.');
         this.value = '';
         return;
     }

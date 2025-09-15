@@ -37,11 +37,11 @@ function sendReservationEmail($toEmail, $toName, $reservationId, $bookTitle, $au
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupDateTime));
     $body = "
     <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
-        <h2 style='color: #2c3e50;'>📖 Reservation Details</h2>
+        <h2 style='color: #2c3e50;'>📖 Book Borrow Request Details</h2>
         <p>Hello <strong>{$toName}</strong>,</p>
-        <p>Your reservation has been recorded with the following details:</p>
+        <p>Your borrow request has been recorded with the following details:</p>
         <table style='border-collapse: collapse; width: 100%;'>
-            <tr><td style='padding:8px; border:1px solid #ddd;'>Reservation ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
+            <tr><td style='padding:8px; border:1px solid #ddd;'>Request ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Book Title</td><td style='padding:8px; border:1px solid #ddd;'>{$bookTitle}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Author</td><td style='padding:8px; border:1px solid #ddd;'>{$author}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Call Number</td><td style='padding:8px; border:1px solid #ddd;'>{$callNumber}</td></tr>
@@ -54,33 +54,33 @@ function sendReservationEmail($toEmail, $toName, $reservationId, $bookTitle, $au
     </div>
     ";
 
-    sendEmail($toEmail, $toName, 'Book Reservation Confirmation', $body, true);
+    sendEmail($toEmail, $toName, 'Book Borrow Request Confirmation', $body, true);
 }
 
 function sendAdminReservationNotification($adminEmail, $reservationId, $userName, $bookTitle, $pickupDateTime) {
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupDateTime));
     $body = "
     <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
-        <h2>New Book Reservation</h2>
-        <p>User <strong>{$userName}</strong> has placed a new reservation.</p>
+        <h2>New Book Borrow Request</h2>
+        <p>User <strong>{$userName}</strong> has placed a new borrow request.</p>
         <table style='border-collapse: collapse; width: 100%;'>
-            <tr><td style='padding:8px; border:1px solid #ddd;'>Reservation ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
+            <tr><td style='padding:8px; border:1px solid #ddd;'>Request ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Book Title</td><td style='padding:8px; border:1px solid #ddd;'>{$bookTitle}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Pickup Time</td><td style='padding:8px; border:1px solid #ddd;'>{$pickupFormatted}</td></tr>
         </table>
     </div>
     ";
 
-    sendEmail($adminEmail, 'Admin', 'New Book Reservation Placed', $body, true);
+    sendEmail($adminEmail, 'Admin', 'New Book Borrow Request Placed', $body, true);
 }
 
 function sendReservationExpiryEmail($email, $name, $bookTitle, $pickupTime) {
-    $subject = "Reservation Expired";
+    $subject = "Book Request Expired";
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupTime));
     $body = "
     <p>Hi {$name},</p>
-    <p>Your reservation for <strong>{$bookTitle}</strong> scheduled at {$pickupFormatted} has expired.</p>
-    <p>Please make a new reservation if needed.</p>
+    <p>Your borrow request for <strong>{$bookTitle}</strong> scheduled at {$pickupFormatted} has expired.</p>
+    <p>Please make a new request if needed.</p>
     <p>- Library Team</p>
     ";
     sendEmail($email, $name, $subject, $body, true);
@@ -88,11 +88,11 @@ function sendReservationExpiryEmail($email, $name, $bookTitle, $pickupTime) {
 
 
 function sendReservationReminderEmail($email, $name, $bookTitle, $pickupTime) {
-    $subject = "Reservation Reminder";
+    $subject = "Book Request Reminder";
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupTime));
     $body = "
     <p>Hi {$name},</p>
-    <p>This is a reminder that your reservation for <strong>{$bookTitle}</strong> is expiring in 1 hour.</p>
+    <p>This is a reminder that your borrow request for <strong>{$bookTitle}</strong> is expiring in 1 hour.</p>
     <p>Scheduled pickup: {$pickupFormatted}</p>
     <p>Please pick up your book on time.</p>
     <p>- Library Team</p>
@@ -102,14 +102,14 @@ function sendReservationReminderEmail($email, $name, $bookTitle, $pickupTime) {
 
 
 function sendReservationConfirmedEmail($email, $name, $bookTitle) {
-    $subject = "Reservation Confirmed";
-    $body = "Hi $name,\n\nYour reservation for \"$bookTitle\" has been confirmed.\nConfirmed at: " . date('Y-m-d H:i:s') . "\n\nThank you for using our library!";
+    $subject = "Book Borrow Request Confirmed";
+    $body = "Hi $name,\n\nYour book borrow request for \"$bookTitle\" has been confirmed.\nConfirmed at: " . date('Y-m-d H:i:s') . "\n\nThank you for using our library!";
     sendEmail($email, $name, $subject, $body); // <-- pass $name as 2nd argument
 }
 
 function sendReservationCancelledEmail($email, $name, $bookTitle) {
-    $subject = "Reservation Cancelled";
-    $body = "Hi $name,\n\nYour reservation for \"$bookTitle\" has been cancelled by the admin.\n\nThank you for using our library!";
+    $subject = "Book Borrow Request Cancelled";
+    $body = "Hi $name,\n\nYour book borrow request for \"$bookTitle\" has been cancelled by the admin.\n\nThank you for using our library!";
     sendEmail($email, $name, $subject, $body); // <-- pass $name as 2nd argument
 }
 
@@ -126,11 +126,11 @@ function sendReservationRescheduledEmail($toEmail, $toName, $reservationId, $boo
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupDateTime));
     $body = "
     <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
-        <h2 style='color: #2c3e50;'>🔄 Reservation Rescheduled</h2>
+        <h2 style='color: #2c3e50;'>🔄 Book Borrow Request Rescheduled</h2>
         <p>Hello <strong>{$toName}</strong>,</p>
-        <p>Your reservation has been rescheduled with the following details:</p>
+        <p>Your borrow request has been rescheduled with the following details:</p>
         <table style='border-collapse: collapse; width: 100%;'>
-            <tr><td style='padding:8px; border:1px solid #ddd;'>Reservation ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
+            <tr><td style='padding:8px; border:1px solid #ddd;'>Request ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Book Title</td><td style='padding:8px; border:1px solid #ddd;'>{$bookTitle}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Author</td><td style='padding:8px; border:1px solid #ddd;'>{$author}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Call Number</td><td style='padding:8px; border:1px solid #ddd;'>{$callNumber}</td></tr>
@@ -143,25 +143,25 @@ function sendReservationRescheduledEmail($toEmail, $toName, $reservationId, $boo
     </div>
     ";
 
-    sendEmail($toEmail, $toName, 'Reservation Rescheduled', $body, true);
+    sendEmail($toEmail, $toName, 'Book Borrow Request Rescheduled', $body, true);
 }
 
 function sendReservationCancelledByUserEmail($email, $name, $reservationId, $bookTitle, $author, $pickupDateTime) {
-    $subject = "Reservation Cancelled Successfully";
+    $subject = "Book Borrow Request Cancelled Successfully";
     $pickupFormatted = date('F j, Y g:i A', strtotime($pickupDateTime));
 
     $body = "
     <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
-        <h2 style='color: #c0392b;'>❌ Reservation Cancelled</h2>
+        <h2 style='color: #c0392b;'>❌ Book Borrow Request Cancelled</h2>
         <p>Hi <strong>{$name}</strong>,</p>
-        <p>Your reservation has been successfully cancelled. Here are the details of the cancelled reservation:</p>
+        <p>Your book borrow request has been successfully cancelled. Here are the details of the cancelled request:</p>
         <table style='border-collapse: collapse; width: 100%;'>
-            <tr><td style='padding:8px; border:1px solid #ddd;'>Reservation ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
+            <tr><td style='padding:8px; border:1px solid #ddd;'>Request ID</td><td style='padding:8px; border:1px solid #ddd;'>{$reservationId}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Book Title</td><td style='padding:8px; border:1px solid #ddd;'>{$bookTitle}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Author</td><td style='padding:8px; border:1px solid #ddd;'>{$author}</td></tr>
             <tr><td style='padding:8px; border:1px solid #ddd;'>Original Pickup Time</td><td style='padding:8px; border:1px solid #ddd;'>{$pickupFormatted}</td></tr>
         </table>
-        <p>If this was a mistake, you can place a new reservation at any time.</p>
+        <p>If this was a mistake, you can place a new book borrow request at any time.</p>
         <p>Thank you,<br><strong>Library Team</strong></p>
     </div>
     ";

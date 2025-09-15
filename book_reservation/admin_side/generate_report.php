@@ -40,11 +40,11 @@ while ($book = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 // === 2. Reserved Books ===
 $row += 2;
-$sheet->setCellValue("A{$row}", 'Reserved Books');
+$sheet->setCellValue("A{$row}", 'Requested Books');
 $row++;
 $sheet->setCellValue("A{$row}", 'Title');
 $sheet->setCellValue("B{$row}", 'Call Number');
-$sheet->setCellValue("C{$row}", 'Total Reservations');
+$sheet->setCellValue("C{$row}", 'Total Requests');
 
 $stmt = $conn->query("
     SELECT r.book_title, b.`CALL NUMBER` AS call_number, COUNT(*) as total_reservations

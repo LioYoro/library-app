@@ -109,7 +109,7 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <select onchange="updateStatus(<?= $book['id'] ?>, this.value)">
                     <option value="available" <?= $book['status']=='available'?'selected':'' ?>>Available</option>
                     <option value="borrowed" <?= $book['status']=='borrowed'?'selected':'' ?>>Borrowed</option>
-                    <option value="reserved" <?= $book['status']=='reserved'?'selected':'' ?>>Reserved</option>
+                    <!-- <option value="reserved" <?= $book['status']=='reserved'?'selected':'' ?>>Reserved</option> -->
                     <option value="archived" <?= $book['status']=='archived'?'selected':'' ?>>Archived</option>
                 </select>
             </td>

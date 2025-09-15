@@ -113,6 +113,16 @@ if (isset($_SESSION['user_id'])) {
             if (json_last_error() === JSON_ERROR_NONE && isset($data['recommendations']) && is_array($data['recommendations'])) {
                 $recommendedBooks = $data['recommendations'];
                 $debugInfo['recommendation_count'] = count($recommendedBooks);
+
+                // 🔹 Enrich recommendations with cover images from DB
+                foreach ($recommendedBooks as &$recBook) {
+                    $stmt = $pdo->prepare("SELECT cover_image_url FROM books WHERE TITLE = ? LIMIT 1");
+                    $stmt->execute([$recBook['TITLE']]);
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $recBook['cover_image_url'] = $row['cover_image_url'] ?? 'assets/Noimage.jpg';
+                }
+                unset($recBook);
+
             } else {
                 echo '<div style="color: red; padding: 10px; margin: 10px; border: 1px solid red; background: #ffe6e6;">
                     <strong>Flask API Issue:</strong><br>
@@ -123,6 +133,7 @@ if (isset($_SESSION['user_id'])) {
                 error_log("Flask response issue for user " . $_SESSION['user_id'] . ". Response: " . $response . ". JSON Error: " . json_last_error_msg());
                 $recommendedBooks = [];
             }
+
         }
         curl_close($ch);
     } else {
@@ -185,6 +196,7 @@ $commentedStmt = $pdo->prepare("
            b.`Dislike`, 
            b.`date_added`, 
            b.`status`,
+           b.`cover_image_url`,
            COUNT(c.id) AS comment_count
     FROM comments c
     JOIN books b ON b.`TITLE` = c.book_title
@@ -201,10 +213,12 @@ $commentedStmt = $pdo->prepare("
              b.`Like`, 
              b.`Dislike`, 
              b.`date_added`, 
-             b.`status`
+             b.`status`,
+             b.`cover_image_url`
     ORDER BY comment_count DESC
     LIMIT $commentsPerPage OFFSET $commentOffset
 ");
+
 
 $commentedStmt->execute();
 $topCommented = $commentedStmt->fetchAll();
@@ -299,9 +313,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <div class="book-grid">
                             <?php foreach ($recommendations as $b): ?>
                                <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"class="book-card blue flex items-center gap-4 p-2">
-                                <img src="EResources/Noimage.jpg" 
-                                alt="Book cover" 
-                                class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                    alt="Book cover" 
+                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                     <div class="flex flex-col">
                                     <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                     <div class="book-meta"><?php if (!empty($b['AUTHOR'])): ?><div><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?></div>
@@ -319,7 +333,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <div class="book-grid">
                             <?php foreach ($trending as $t): ?>
                                 <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow flex items-center gap-4 p-2">
-                                    <img src="EResources/Noimage.jpg" 
+                                    <img src="<?= htmlspecialchars($t['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
                                     alt="Book cover" 
                                     class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                     <div class="flex flex-col">
@@ -339,9 +353,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <div class="book-grid">
                                 <?php foreach ($otherWorks as $w): ?>
                                     <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple flex items-center gap-4 p-2">
-                                    <img src="EResources/Noimage.jpg" 
-                                    alt="Book cover" 
-                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                    <img src="<?= htmlspecialchars($w['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                        alt="Book cover" 
+                                        class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                         <div class="flex flex-col">
                                         <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
                                         <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
@@ -362,9 +376,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
                         foreach ($stmt as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange flex items-center gap-4 p-2">
-                                    <img src="EResources/Noimage.jpg" 
-                                    alt="Book cover" 
-                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                               <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                alt="Book cover" 
+                                class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                 <div class="flex flex-col">
                                 <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
                                 <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta"><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
@@ -387,7 +401,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <?php foreach ($likedBooks as $b): ?>
                                 <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                     <div class="aside-entry">
-                                        <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg') ?>" class="aside-image" alt="Book cover">
+                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                        class="aside-image" 
+                                        alt="Book cover">
                                         <div>
                                             <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                             <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
@@ -420,7 +436,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <?php foreach ($recommendedBooks as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                 <div class="aside-entry">
-                                    <img src="<?= htmlspecialchars($b['COVER_IMAGE'] ?? 'https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg') ?>" class="aside-image" alt="Book cover">
+                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                        class="aside-image" 
+                                        alt="Book cover">
                                     <div>
                                         <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                         <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
@@ -441,7 +459,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <?php foreach ($topCommented as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                 <div class="aside-entry">
-                                    <img src="https://storage.googleapis.com/a1aa/image/9512dff8-dde3-4812-5c14-1588768a98ca.jpg" class="aside-image" alt="Book cover">
+                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
+                                        class="aside-image" 
+                                        alt="Book cover">
                                     <div>
                                         <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                         <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>

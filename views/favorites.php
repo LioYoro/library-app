@@ -40,7 +40,13 @@ foreach ($commentStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     <div class="results grid gap-4">
       <?php foreach ($books as $book): ?>
         <a href="book_detail.php?title=<?= urlencode($book['TITLE']) ?>" class="card flex gap-4 p-4 border rounded-md bg-white shadow hover:shadow-md transition">
-          <div class="thumbnail text-4xl">📘</div>
+          <div class="thumbnail">
+            <img src="<?= !empty($book['cover_image_url']) 
+                          ? '../' . htmlspecialchars($book['cover_image_url']) 
+                          : '../assets/Noimage.jpg' ?>" 
+                alt="Book cover" 
+                class="w-16 h-24 object-cover rounded shadow">
+          </div>
           <div class="info flex-1">
             <div class="meta text-lg font-semibold text-blue-700 mb-1">
               <?= htmlspecialchars($book['TITLE']) ?>

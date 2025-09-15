@@ -46,13 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id'])) {
                 $reservation['created_at']
             );
 
-            $_SESSION['message'] = "Reservation cancelled successfully.";
+            $_SESSION['message'] = "Borrow request cancelled successfully.";
         } else {
-            $_SESSION['error'] = "Reservation not found or cannot be cancelled.";
+            $_SESSION['error'] = "Borrow request not found or cannot be cancelled.";
         }
     } catch (PDOException $e) {
-        error_log("Cancel reservation error: " . $e->getMessage());
-        $_SESSION['error'] = "An error occurred while cancelling the reservation.";
+        error_log("Cancel borrow request error: " . $e->getMessage());
+        $_SESSION['error'] = "An error occurred while cancelling the borrow request.";
     }
 }
 
