@@ -171,13 +171,41 @@ $commentOffset = ($commentedPage - 1) * $commentsPerPage;
 
 // Fetch most commented books (paginated)
 $commentedStmt = $pdo->prepare("
-    SELECT b.*, COUNT(c.id) as comment_count
+    SELECT b.`id`, 
+           b.`TITLE`, 
+           b.`AUTHOR`, 
+           b.`ACCESSION NO.`, 
+           b.`CALL NUMBER`, 
+           b.`DATE ACQUIRED`, 
+           b.`SUMMARY`, 
+           b.`KEYWORDS`, 
+           b.`General_Category`, 
+           b.`Sub_Category`, 
+           b.`Like`, 
+           b.`Dislike`, 
+           b.`date_added`, 
+           b.`status`,
+           COUNT(c.id) AS comment_count
     FROM comments c
-    JOIN books b ON b.TITLE = c.book_title
-    GROUP BY c.book_title
+    JOIN books b ON b.`TITLE` = c.book_title
+    GROUP BY b.`id`, 
+             b.`TITLE`, 
+             b.`AUTHOR`, 
+             b.`ACCESSION NO.`, 
+             b.`CALL NUMBER`, 
+             b.`DATE ACQUIRED`, 
+             b.`SUMMARY`, 
+             b.`KEYWORDS`, 
+             b.`General_Category`, 
+             b.`Sub_Category`, 
+             b.`Like`, 
+             b.`Dislike`, 
+             b.`date_added`, 
+             b.`status`
     ORDER BY comment_count DESC
     LIMIT $commentsPerPage OFFSET $commentOffset
 ");
+
 $commentedStmt->execute();
 $topCommented = $commentedStmt->fetchAll();
 
@@ -218,32 +246,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
         -->
     </div>
 
-    <section class="custom-slider-section">
-        <div class="megaphone-icon">
-            <ion-icon name="megaphone"></ion-icon>
-        </div>
-        <div class="slider-content">
-            <button class="slider-nav">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="slider-main">
-                <img src="https://storage.googleapis.com/a1aa/image/8535a2ea-c68e-47a1-475e-c583ecea6076.jpg" class="slider-image" />
-                <div class="slider-text">
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                    <p>Something Something Something</p>
-                </div>
-            </div>
-            <button class="slider-nav">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-        <div class="slider-dots">
-            <span class="dot active"></span>
-            <span class="dot"></span>
-        </div>
-    </section>
+     <!-- EVENTSECTION -->
+    <?php include "views/view_event.php"; ?>
+
 
     <!-- MAIN CONTENT SECTION -->
     <div style="display: block; width: 100%; margin-bottom: 40px;">

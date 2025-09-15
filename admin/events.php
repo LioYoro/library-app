@@ -17,7 +17,9 @@ include('includes/sidebar.php');
     <h2 class="text-lg font-semibold mb-4">Events Dashboard</h2>
 
     <a href="events_tools/event_proposals.php" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded inline-block">
-      View Event Proposals
+      View Event Proposals <br>
+      <a href="events_tools/new_event.php" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded inline-block">
+      New Event
     </a>
 
     <!-- You can add more event sections or summaries here later -->

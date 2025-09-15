@@ -1,105 +1,139 @@
 <?php
-$pageTitle = 'Event Proposals';
-include('../includes/header.php');
-include('../includes/sidebar.php');
-include('../db.php');
+// DB connection
+$pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Helper to get month boundaries
-$currentMonth = date('m');
-$currentYear = date('Y');
-$lastMonth = date('m', strtotime('-1 month'));
-$lastMonthYear = date('Y', strtotime('-1 month'));
+// Pagination
+$limit = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// Mark as read/unread
+if (isset($_GET['toggle_id'])) {
+    $id = (int)$_GET['toggle_id'];
+    $status = $_GET['status'] === "READ" ? "UNREAD" : "READ";
+    $stmt = $pdo->prepare("UPDATE event_proposals SET status=? WHERE id=?");
+    $stmt->execute([$status, $id]);
+    header("Location: manage_proposals.php?page=$page");
+    exit;
+}
+
+// Delete read proposal
+if (isset($_GET['delete_id'])) {
+    $id = (int)$_GET['delete_id'];
+    $stmt = $pdo->prepare("SELECT file_path FROM event_proposals WHERE id=?");
+    $stmt->execute([$id]);
+    $file = $stmt->fetchColumn();
+    if ($file && file_exists(__DIR__ . "/uploads/" . $file)) {
+        unlink(__DIR__ . "/uploads/" . $file);
+    }
+    $stmt = $pdo->prepare("DELETE FROM event_proposals WHERE id=?");
+    $stmt->execute([$id]);
+    header("Location: manage_proposals.php?page=$page");
+    exit;
+}
+
+// Current month proposals (UNREAD only)
+$currentMonth = date("Y-m");
+$stmt = $pdo->prepare("SELECT * FROM propose_event
+    WHERE DATE_FORMAT(date_submitted, '%Y-%m') = ? AND (status IS NULL OR status='UNREAD') 
+    ORDER BY date_submitted DESC 
+    LIMIT $limit OFFSET $offset");
+$stmt->execute([$currentMonth]);
+$unreadProposals = $stmt->fetchAll();
+
+// Count total unread proposals
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM propose_event 
+    WHERE DATE_FORMAT(date_submitted, '%Y-%m') = ? AND (status IS NULL OR status='UNREAD')");
+$countStmt->execute([$currentMonth]);
+$totalUnread = $countStmt->fetchColumn();
+$totalPages = ceil($totalUnread / $limit);
+
+// Read proposals (all, shown in a separate list)
+$readStmt = $pdo->prepare("SELECT * FROM propose_event WHERE status='READ' ORDER BY date_submitted DESC");
+$readStmt->execute();
+$readProposals = $readStmt->fetchAll();
 ?>
 
-<div id="main-content" class="flex-1 flex flex-col min-w-0 ml-[15rem] h-screen transition-all duration-300">
-  <header class="h-16 bg-blue-500 text-white flex items-center justify-between px-6 shadow">
-    <h1 class="text-xl font-bold"><?= $pageTitle ?></h1>
-    <div class="flex items-center space-x-3">
-      <span class="text-sm">ADMIN</span>
-      <i class="fas fa-user-circle text-2xl"></i>
-    </div>
-  </header>
- 
-  
-
-  <a href="../events.php" class="inline-block bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded mb-4">
-  ← Back to Events Dashboard
-</a>
-  <main class="flex-1 p-6 bg-white overflow-y-auto">
-
-    <!-- This Month Proposals -->
-    <h2 class="text-lg font-semibold mb-2">📌 New Event Proposals (This Month)</h2>
-    <table class="w-full border text-sm mb-6">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="border px-3 py-2">Name</th>
-          <th class="border px-3 py-2">Event Title</th>
-          <th class="border px-3 py-2">Description</th>
-          <th class="border px-3 py-2">Contact</th>
-          <th class="border px-3 py-2">File</th>
-          <th class="border px-3 py-2">Submitted At</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $queryNew = "SELECT * FROM events WHERE MONTH(date_submitted) = $currentMonth AND YEAR(date_submitted) = $currentYear ORDER BY date_submitted DESC";
-        $resultNew = mysqli_query($conn, $queryNew);
-
-        if (mysqli_num_rows($resultNew) > 0) {
-          while ($row = mysqli_fetch_assoc($resultNew)) {
-            echo "<tr>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['name']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['event_title']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['description']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['contact']) . "</td>";
-            echo "<td class='border px-3 py-2'><a href='uploads/" . $row['file_path'] . "' target='_blank'>View File</a></td>";
-            echo "<td class='border px-3 py-2'>" . $row['date_submitted'] . "</td>";
-            echo "</tr>";
-          }
-        } else {
-          echo "<tr><td colspan='6' class='text-center p-4'>No new proposals submitted this month.</td></tr>";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Event Proposals</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f9fafb; }
+        h1 { color: #1d4ed8; }
+        .proposal-card {
+            border: 1px solid #ddd; background: #fff; padding: 15px;
+            margin-bottom: 15px; border-radius: 6px;
         }
-        ?>
-      </tbody>
-    </table>
-
-    <!-- Past Proposals -->
-    <h2 class="text-lg font-semibold mb-2">📂 Past Event Proposals (Before This Month)</h2>
-    <table class="w-full border text-sm">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="border px-3 py-2">Name</th>
-          <th class="border px-3 py-2">Event Title</th>
-          <th class="border px-3 py-2">Description</th>
-          <th class="border px-3 py-2">Contact</th>
-          <th class="border px-3 py-2">File</th>
-          <th class="border px-3 py-2">Submitted At</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $queryOld = "SELECT * FROM events WHERE (MONTH(date_submitted) < $currentMonth OR YEAR(date_submitted) < $currentYear) ORDER BY date_submitted DESC";
-        $resultOld = mysqli_query($conn, $queryOld);
-
-        if (mysqli_num_rows($resultOld) > 0) {
-          while ($row = mysqli_fetch_assoc($resultOld)) {
-            echo "<tr>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['name']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['event_title']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['description']) . "</td>";
-            echo "<td class='border px-3 py-2'>" . htmlspecialchars($row['contact']) . "</td>";
-            echo "<td class='border px-3 py-2'><a href='uploads/" . $row['file_path'] . "' target='_blank'>View File</a></td>";
-            echo "<td class='border px-3 py-2'>" . $row['date_submitted'] . "</td>";
-            echo "</tr>";
-          }
-        } else {
-          echo "<tr><td colspan='6' class='text-center p-4'>No older proposals found.</td></tr>";
+        .proposal-card h3 { margin: 0 0 10px; color: #1d4ed8; }
+        .proposal-card p { margin: 5px 0; }
+        .btn { padding: 6px 12px; border-radius: 4px; text-decoration: none; color: #fff; font-size: 14px; }
+        .btn-green { background: green; }
+        .btn-red { background: red; }
+        .btn-del { background: #dc2626; }
+        .pagination { margin-top: 15px; text-align: center; }
+        .pagination a {
+            padding: 6px 12px; margin: 0 2px; border: 1px solid #ccc; border-radius: 4px;
+            text-decoration: none; color: #333;
         }
-        ?>
-      </tbody>
-    </table>
+        .pagination .active { background: #1d4ed8; color: #fff; }
+    </style>
+</head>
+<body>
+    <h1>📑 Event Proposals</h1>
 
-  </main>
-</div>
+    <h2>📌 Current Month Proposals (Unread)</h2>
+    <?php if (empty($unreadProposals)): ?>
+        <p>No new proposals this month.</p>
+    <?php else: ?>
+        <?php foreach ($unreadProposals as $proposal): ?>
+            <div class="proposal-card">
+                <h3><?= htmlspecialchars($proposal['event_title']) ?></h3>
+                <p><b>From:</b> <?= htmlspecialchars($proposal['name']) ?></p>
+                <p><b>Contact:</b> <?= htmlspecialchars($proposal['contact']) ?></p>
+                <p><?= nl2br(htmlspecialchars($proposal['description'])) ?></p>
+                <p><b>File:</b> 
+                    <?php if ($proposal['file_path']): ?>
+                        <a href="uploads/<?= htmlspecialchars($proposal['file_path']) ?>" target="_blank">View File</a>
+                    <?php else: ?>
+                        No File
+                    <?php endif; ?>
+                </p>
+                <a href="?toggle_id=<?= $proposal['id'] ?>&status=<?= $proposal['status'] ?? 'UNREAD' ?>" 
+                   class="btn btn-green">Mark as READ</a>
+            </div>
+        <?php endforeach; ?>
 
-<?php include('../includes/footer.php'); ?>
+        <!-- Pagination -->
+        <div class="pagination">
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <a href="?page=<?= $i ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; ?>
+        </div>
+    <?php endif; ?>
+
+    <h2>✅ Read Proposals</h2>
+    <?php if (empty($readProposals)): ?>
+        <p>No proposals marked as read.</p>
+    <?php else: ?>
+        <?php foreach ($readProposals as $proposal): ?>
+            <div class="proposal-card" style="background:#f1f5f9;">
+                <h3><?= htmlspecialchars($proposal['event_title']) ?></h3>
+                <p><b>From:</b> <?= htmlspecialchars($proposal['name']) ?></p>
+                <p><?= nl2br(htmlspecialchars($proposal['description'])) ?></p>
+                <p><b>File:</b> 
+                    <?php if ($proposal['file_path']): ?>
+                        <a href="uploads/<?= htmlspecialchars($proposal['file_path']) ?>" target="_blank">View File</a>
+                    <?php else: ?>
+                        No File
+                    <?php endif; ?>
+                </p>
+                <a href="?toggle_id=<?= $proposal['id'] ?>&status=READ" class="btn btn-red">Mark as UNREAD</a>
+                <a href="?delete_id=<?= $proposal['id'] ?>" class="btn btn-del" onclick="return confirm('Delete this proposal?')">🗑 Delete</a>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</body>
+</html>
