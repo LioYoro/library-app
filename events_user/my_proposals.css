@@ -1,0 +1,227 @@
+.content-wrapper {
+    padding: 20px;
+}
+
+.page-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.filter-form {
+    margin-bottom: 20px;
+}
+
+.filter-form select {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.proposals-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.proposal-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.2s ease-in-out;
+}
+
+.proposal-card h3 {
+  font-size: 18px;       /* bigger than default */
+  font-weight: 700;      /* bold */
+  color: #000000;        /* library blue */
+  margin-bottom: 10px;   /* spacing below */
+  text-align: center;    /* center-align inside card */
+}
+
+
+.proposal-card:hover {
+    background: #f9fafb;
+    transform: translateY(-2px);
+}
+
+.status {
+    font-weight: bold;
+}
+
+.status.pending {
+    color: #000000;
+}
+
+.status.accepted {
+    color: #16a34a;
+}
+
+.status.rejected {
+    color: #dc2626;
+}
+
+.status.cancelled {
+    color: #d1981c; /* neutral gray */
+}
+
+
+.empty-msg {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 20px;
+    color: #6b7280;
+}
+
+/* =================== PROPOSAL DETAIL =================== */
+.proposal-detail {
+  max-width: 800px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.proposal-detail .proposal-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1d4ed8; /* Library blue */
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.proposal-detail .proposal-status {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.proposal-detail .status {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* status colors */
+.status.accepted { background: #d1fae5; color: #065f46; }
+.status.pending  { background: #f3f4f6; color: #374151;}
+.status.rejected { background: #fee2e2; color: #991b1b; }
+.status.cancelled { background: #fde68a; color: #b45309; } /* orange bg + darker orange text */
+
+
+.proposal-detail .proposal-description {
+  margin-bottom: 25px;
+}
+
+.proposal-detail .proposal-description strong {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.proposal-detail .proposal-description p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.proposal-detail p {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+
+/* =================== EVENT DETAIL (REFERENCE STYLE) =================== */
+.event-detail {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.event-detail img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.event-detail .title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.event-detail .description-label {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.event-detail .description-text {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Buttons */
+.btn-view-file,
+.btn-back {
+  display: inline-block;
+  padding: 10px 18px;
+  margin-top: 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s ease-in-out;
+}
+
+.btn-view-file {
+  background-color: #1d4ed8;
+  color: #fff;
+}
+
+.btn-view-file:hover {
+  background-color: #153eaa;
+}
+
+.btn-back {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+.btn-back:hover {
+  background-color: #d1d5db;
+}
+
+.back-btn-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-cancel {
+  background-color: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+  background-color: #b91c1c;
+}

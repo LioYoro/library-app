@@ -1,10 +1,6 @@
 <?php
 session_start();
-<<<<<<< Updated upstream
 $pageTitle = "Manage Book Borrow Requests";
-=======
->>>>>>> Stashed changes
-
 // Include database connection
 include('../../includes/db.php'); // Adjust path as needed
 require_once __DIR__ . '/../../includes/reservation_mailer.php';

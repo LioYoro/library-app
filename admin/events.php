@@ -57,7 +57,7 @@ $postedEvents = $pdo->query("SELECT id, title, description
     </div>
 
     <!-- Posted Events -->
-    <div class="bg-white p-4 shadow rounded">
+    <div class="bg-white p-4 shadow rounded mb-6">
       <h3 class="text-md font-semibold mb-3">✅ Current Posted Events</h3>
       <?php if (empty($postedEvents)): ?>
         <p class="text-gray-500">No events posted yet.</p>
@@ -71,13 +71,22 @@ $postedEvents = $pdo->query("SELECT id, title, description
           <?php endforeach; ?>
         </ul>
         <div class="mt-3 text-right">
-        
-        <a href="events_tools/new_event.php" 
+          <a href="events_tools/new_event.php" 
              class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">
             View All Events
           </a>
         </div>
       <?php endif; ?>
+    </div>
+
+    <!-- Moved the Run Event Expiry button inside main content area at the bottom -->
+    <div class="flex justify-center">
+        <form method="POST" action="events_tools/run_event_cron.php">
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded">
+                Run Event Expiry Cron Now
+            </button>
+        </form>
     </div>
   </main>
 </div>

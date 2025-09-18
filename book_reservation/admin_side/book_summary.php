@@ -126,56 +126,16 @@ $totalReservedPages = ceil($totalReservedBooks / $perPage);
             </div>
             <span class="book-count"><?= $r['total_reservations'] ?> requests</span>
         </div>
-        <div class="summary-box">
-            <strong>Currently Pending</strong>
-            <p><?= $currentPending ?></p>
-        </div>
-    </div>
+    <?php endforeach; ?>
+</div>
+<div class="pagination">
+    <?php for($p=1; $p<=$totalReservedPages; $p++): ?>
+        <a href="?borrowed_page=<?= $borrowedPage ?>&reserved_page=<?= $p ?>" class="<?= $p==$reservedPage?'active':'' ?>"><?= $p ?></a>
+    <?php endfor; ?>
+</div>
 
-    <!-- Top Borrowed Books -->
-    <h2>Top Borrowed Books</h2>
-    <div class="book-list">
-        <?php foreach($topBorrowed as $b): ?>
-            <div class="book-item">
-                <div class="book-info">
-                    <span class="book-title" data-fulltitle="<?= htmlspecialchars($b['book_title']) ?>">
-                        <strong><?= htmlspecialchars($b['book_title']) ?></strong>
-                    </span>
-                    <span class="book-callnumber"><?= htmlspecialchars($b['call_number']) ?></span>
-                </div>
-                <span class="book-count"><?= $b['total_borrows'] ?> borrows</span>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <div class="pagination">
-        <?php for($p=1; $p<=$totalBorrowedPages; $p++): ?>
-            <a href="?borrowed_page=<?= $p ?>&reserved_page=<?= $reservedPage ?>" class="<?= $p==$borrowedPage?'active':'' ?>"><?= $p ?></a>
-        <?php endfor; ?>
-    </div>
-
-    <!-- Top Reserved Books -->
-    <h2>Top Requested Books</h2>
-    <div class="book-list">
-        <?php foreach($topReserved as $r): ?>
-            <div class="book-item">
-                <div class="book-info">
-                    <span class="book-title" data-fulltitle="<?= htmlspecialchars($r['book_title']) ?>">
-                        <strong><?= htmlspecialchars($r['book_title']) ?></strong>
-                    </span>
-                    <span class="book-callnumber"><?= htmlspecialchars($r['call_number']) ?></span>
-                </div>
-                <span class="book-count"><?= $r['total_reservations'] ?> requests</span>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <div class="pagination">
-        <?php for($p=1; $p<=$totalReservedPages; $p++): ?>
-            <a href="?borrowed_page=<?= $borrowedPage ?>&reserved_page=<?= $p ?>" class="<?= $p==$reservedPage?'active':'' ?>"><?= $p ?></a>
-        <?php endfor; ?>
-    </div>
-
-    <!-- Generate Report Button -->
-    <a href="generate_report.php" class="btn-generate">Generate Report</a>
+<!-- Generate Report Button -->
+<a href="generate_report.php" class="btn-generate">Generate Report</a>
 </div> <!-- end #main-content -->
 </body>
 </html>

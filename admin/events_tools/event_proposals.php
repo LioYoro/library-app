@@ -5,90 +5,202 @@ session_start();
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Handle single Accept/Reject actions
+require_once __DIR__ . '/../../includes/event_mailer.php';
+
+// =================== SINGLE ACCEPT/REJECT ===================
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
     $action = $_GET['action'];
+    $sendEmail = isset($_GET['send_email']) ? (bool)$_GET['send_email'] : false;
 
     if (in_array($action, ['ACCEPTED','REJECTED'])) {
-        // Update in propose_event
+        // 1️⃣ Update propose_event
         $stmt = $pdo->prepare("UPDATE propose_event SET status=? WHERE id=?");
         $stmt->execute([$action, $id]);
 
-        // Update in event_report
-        $stmt = $pdo->prepare("UPDATE event_report SET status=?, decision_date=NOW() WHERE proposal_id=?");
+        // 2️⃣ Insert or update in event_report including file_path and file_type
+        $stmt = $pdo->prepare("
+            INSERT INTO event_report
+            (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date)
+            SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW()
+            FROM propose_event
+            WHERE id=?
+            ON DUPLICATE KEY UPDATE 
+                status=VALUES(status), 
+                decision_date=VALUES(decision_date),
+                file_path=VALUES(file_path),
+                file_type=VALUES(file_type)
+        ");
         $stmt->execute([$action, $id]);
+
+        // 3️⃣ Send email if requested
+        if ($sendEmail) {
+            // Fetch proposal info
+            $stmt = $pdo->prepare("SELECT name, user_email, event_title, description, event_date, event_time FROM propose_event WHERE id=?");
+            $stmt->execute([$id]);
+            $proposal = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($proposal) {
+                if ($action === 'ACCEPTED') {
+                    sendProposalAcceptedEmail(
+                        $proposal['user_email'],
+                        $proposal['name'],
+                        $proposal['event_title'],
+                        $proposal['description'],
+                        $proposal['event_date'],
+                        $proposal['event_time']
+                    );
+                } else { // REJECTED
+                    sendProposalRejectedEmail(
+                        $proposal['user_email'],
+                        $proposal['name'],
+                        $proposal['event_title'],
+                        $proposal['description'],
+                        $proposal['event_date'],
+                        $proposal['event_time']
+                    );
+                }
+            }
+        }
     }
+
     header("Location: event_proposals.php");
     exit;
 }
 
-// Handle bulk actions (only for Pending)
+// =================== BULK ACTIONS ===================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action']) && !empty($_POST['ids'])) {
     $action = $_POST['bulk_action'];
     $ids = $_POST['ids'];
 
     if (in_array($action, ['ACCEPTED','REJECTED'])) {
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        foreach ($ids as $id) {
+            $id = (int)$id;
 
-        // Update propose_event
-        $stmt = $pdo->prepare("UPDATE propose_event SET status=? WHERE id IN ($placeholders)");
-        $stmt->execute(array_merge([$action], $ids));
+            // Update propose_event
+            $stmt = $pdo->prepare("UPDATE propose_event SET status=? WHERE id=?");
+            $stmt->execute([$action, $id]);
 
-        // Update event_report
-        $stmt = $pdo->prepare("UPDATE event_report SET status=?, decision_date=NOW() WHERE proposal_id IN ($placeholders)");
-        $stmt->execute(array_merge([$action], $ids));
+            // Insert or update event_report including file_path and file_type
+            $stmt = $pdo->prepare("INSERT INTO event_report (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date) SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW() FROM propose_event WHERE id=? ON DUPLICATE KEY UPDATE status=VALUES(status), decision_date=VALUES(decision_date), file_path=VALUES(file_path), file_type=VALUES(file_type)");
+            $stmt->execute([$action, $id]);
+        }
     }
+
     header("Location: event_proposals.php");
     exit;
 }
 
-// Fetch data grouped by status
+// =================== FETCH DATA ===================
 $pending = $pdo->query("SELECT * FROM propose_event WHERE status='PENDING' ORDER BY date_submitted DESC")->fetchAll();
 $accepted = $pdo->query("SELECT * FROM propose_event WHERE status='ACCEPTED' ORDER BY date_submitted DESC")->fetchAll();
 $rejected = $pdo->query("SELECT * FROM propose_event WHERE status='REJECTED' ORDER BY date_submitted DESC")->fetchAll();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Manage Event Proposals</title>
+<!-- Added link to separate popup modal CSS file -->
+<link rel="stylesheet" href="event_proposals.css">
 <style>
-    body { font-family: Arial, sans-serif; background: #f8fafc; margin: 20px; }
-    h1 { text-align: center; color: #1d4ed8; margin-bottom: 30px; }
-    .container { display: flex; gap: 20px; }
-    .box { flex: 1; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-height: 80vh; overflow-y: auto; }
-    h2 { text-align: center; font-size: 18px; margin-bottom: 15px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #f1f5f9; }
-    .btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; color: #fff; text-decoration: none; }
-    .btn-view { background: #1d4ed8; }
-    .btn-accept { background: green; }
-    .btn-reject { background: red; }
-    .popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
-    .popup-content { background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:5% auto; position:relative; }
-    .close { position:absolute; top:10px; right:15px; cursor:pointer; font-weight:bold; }
-    .bulk-actions { margin-bottom: 10px; text-align: right; }
+body { font-family: Arial, sans-serif; background: #f8fafc; margin: 20px; }
+h1 { text-align: center; color: #1d4ed8; margin-bottom: 30px; }
+.container { display: flex; gap: 20px; }
+.box { flex: 1; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-height: 80vh; overflow-y: auto; }
+h2 { text-align: center; font-size: 18px; margin-bottom: 15px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+th { background: #f1f5f9; }
+.btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; color: #fff; text-decoration: none; }
+.btn-view { background: #1d4ed8; }
+.btn-accept { background: green; }
+.btn-reject { background: red; }
+.popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+.popup-content { background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:5% auto; position:relative; }
+.close { position:absolute; top:10px; right:15px; cursor:pointer; font-weight:bold; }
+.bulk-actions { margin-bottom: 10px; text-align: right; }
+.email-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+.email-modal { background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:5% auto; position:relative; }
+.email-modal-header { text-align:center; margin-bottom:15px; }
+.email-modal-body { margin-bottom:20px; }
+.email-modal-actions { display:flex; justify-content:center; gap:10px; }
+.email-modal-btn { padding:10px 20px; border-radius:4px; font-size:14px; color:#fff; text-decoration:none; cursor:pointer; }
+.email-modal-btn-primary { background:green; }
+.email-modal-btn-danger { background:red; }
+.email-modal-btn-secondary { background:#ccc; }
 </style>
 <script>
-function confirmAction(url, action) {
-    if (confirm("Are you sure you want to " + action + " this proposal?")) {
-        window.location.href = url;
+function confirmActionWithEmail(action, id, email, name, title, desc, date, time) {
+    // Show custom modal instead of browser confirm
+    showEmailConfirmModal(action, id, email, name, title, desc, date, time);
+}
+
+function showEmailConfirmModal(action, id, email, name, title, desc, date, time) {
+    const modal = document.getElementById('emailConfirmModal');
+    const actionText = action === 'ACCEPTED' ? 'accept' : 'reject';
+    const actionColor = action === 'ACCEPTED' ? 'accept' : 'reject';
+    
+    // Update modal content
+    document.getElementById('modalActionText').textContent = actionText;
+    document.getElementById('modalProposalTitle').textContent = title;
+    
+    // Update button colors based on action
+    const proceedBtn = document.getElementById('proceedWithEmail');
+    const proceedNoEmailBtn = document.getElementById('proceedWithoutEmail');
+    
+    if (action === 'ACCEPTED') {
+        proceedBtn.className = 'email-modal-btn email-modal-btn-primary';
+        proceedNoEmailBtn.className = 'email-modal-btn email-modal-btn-primary';
+    } else {
+        proceedBtn.className = 'email-modal-btn email-modal-btn-danger';
+        proceedNoEmailBtn.className = 'email-modal-btn email-modal-btn-danger';
+    }
+    
+    // Set up button click handlers
+    proceedBtn.onclick = function() {
+        hideEmailConfirmModal();
+        window.location.href = `?action=${action}&id=${id}&send_email=1`;
+    };
+    
+    proceedNoEmailBtn.onclick = function() {
+        hideEmailConfirmModal();
+        window.location.href = `?action=${action}&id=${id}&send_email=0`;
+    };
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
+function hideEmailConfirmModal() {
+    document.getElementById('emailConfirmModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('emailConfirmModal');
+    if (event.target === modal) {
+        hideEmailConfirmModal();
     }
 }
 
-function showPopup(title, desc, contact, filePath) {
+function showPopup(title, desc, contact, email, date, time, filePath) {
     document.getElementById('popup').style.display = 'block';
     document.getElementById('pTitle').innerText = title;
     document.getElementById('pDesc').innerText = desc;
     document.getElementById('pContact').innerText = contact;
+    document.getElementById('pEmail').innerText = email;
+    document.getElementById('pDate').innerText = date;
+    document.getElementById('pTime').innerText = time;
     document.getElementById('pFile').href = filePath;
 }
+
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
 }
+
 function toggleSelectAll(source, formId) {
     checkboxes = document.querySelectorAll('#' + formId + ' input[type="checkbox"]');
     for (var i = 0; i < checkboxes.length; i++) {
@@ -120,7 +232,7 @@ function toggleSelectAll(source, formId) {
             <table>
                 <tr>
                     <th><input type="checkbox" onclick="toggleSelectAll(this,'pendingForm')"></th>
-                    <th>Name</th><th>Event Title</th><th>Date</th><th>Actions</th>
+                    <th>Name</th><th>Event Title</th><th>Date Submitted</th><th>Actions</th>
                 </tr>
                 <?php foreach ($pending as $p): ?>
                 <tr>
@@ -130,9 +242,23 @@ function toggleSelectAll(source, formId) {
                     <td><?= $p['date_submitted'] ?></td>
                     <td>
                         <a href="javascript:void(0)" class="btn btn-view"
-                           onclick="showPopup('<?= htmlspecialchars($p['event_title']) ?>','<?= htmlspecialchars($p['description']) ?>','<?= htmlspecialchars($p['contact']) ?>','<?= $p['file_path'] ?>')">View</a>
-                        <a href="javascript:void(0)" class="btn btn-accept" onclick="confirmAction('?action=ACCEPTED&id=<?= $p['id'] ?>','Accept')">Accept</a>
-                        <a href="javascript:void(0)" class="btn btn-reject" onclick="confirmAction('?action=REJECTED&id=<?= $p['id'] ?>','Reject')">Reject</a>
+                        onclick="showPopup(
+                            '<?= htmlspecialchars($p['event_title']) ?>',
+                            '<?= htmlspecialchars($p['description']) ?>',
+                            '<?= htmlspecialchars($p['contact']) ?>',
+                            '<?= htmlspecialchars($p['user_email']) ?>',
+                            '<?= htmlspecialchars($p['event_date']) ?>',
+                            '<?= htmlspecialchars(date("g:i A", strtotime($p['event_time']))) ?>',
+                            '../../events_user/uploads/<?= htmlspecialchars($p['file_path']) ?>'
+                        )">View</a>
+                        <a href="javascript:void(0)" class="btn btn-accept"
+                           onclick="confirmActionWithEmail('ACCEPTED', <?= $p['id'] ?>, '<?= htmlspecialchars($p['user_email']) ?>', '<?= htmlspecialchars($p['name']) ?>', '<?= htmlspecialchars($p['event_title']) ?>', '<?= htmlspecialchars($p['description']) ?>', '<?= htmlspecialchars($p['event_date']) ?>', '<?= htmlspecialchars($p['event_time']) ?>')">
+                           Accept
+                        </a>
+                        <a href="javascript:void(0)" class="btn btn-reject"
+                           onclick="confirmActionWithEmail('REJECTED', <?= $p['id'] ?>, '<?= htmlspecialchars($p['user_email']) ?>', '<?= htmlspecialchars($p['name']) ?>', '<?= htmlspecialchars($p['event_title']) ?>', '<?= htmlspecialchars($p['description']) ?>', '<?= htmlspecialchars($p['event_date']) ?>', '<?= htmlspecialchars($p['event_time']) ?>')">
+                           Reject
+                        </a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -149,7 +275,7 @@ function toggleSelectAll(source, formId) {
         <?php else: ?>
         <table>
             <tr>
-                <th>Name</th><th>Event Title</th><th>Date</th><th>Actions</th>
+                <th>Name</th><th>Event Title</th><th>Date Submitted</th><th>Actions</th>
             </tr>
             <?php foreach ($accepted as $a): ?>
             <tr>
@@ -158,8 +284,17 @@ function toggleSelectAll(source, formId) {
                 <td><?= $a['date_submitted'] ?></td>
                 <td>
                     <a href="javascript:void(0)" class="btn btn-view"
-                       onclick="showPopup('<?= htmlspecialchars($a['event_title']) ?>','<?= htmlspecialchars($a['description']) ?>','<?= htmlspecialchars($a['contact']) ?>','<?= $a['file_path'] ?>')">View</a>
-                    <a href="javascript:void(0)" class="btn btn-reject" onclick="confirmAction('?action=REJECTED&id=<?= $a['id'] ?>','Reject')">Reject</a>
+                        onclick="showPopup(
+                            '<?= htmlspecialchars($a['event_title']) ?>',
+                            '<?= htmlspecialchars($a['description']) ?>',
+                            '<?= htmlspecialchars($a['contact']) ?>',
+                            '<?= htmlspecialchars($a['user_email']) ?>',
+                            '<?= htmlspecialchars($a['event_date']) ?>',
+                            '<?= htmlspecialchars(date("g:i A", strtotime($a['event_time']))) ?>',
+                            '../../events_user/uploads/<?= htmlspecialchars($a['file_path']) ?>'
+                        )">View</a>
+                    <a href="javascript:void(0)" class="btn btn-reject"
+                       onclick="confirmActionWithEmail('REJECTED', <?= $a['id'] ?>, '<?= htmlspecialchars($a['user_email']) ?>', '<?= htmlspecialchars($a['name']) ?>', '<?= htmlspecialchars($a['event_title']) ?>', '<?= htmlspecialchars($a['description']) ?>', '<?= htmlspecialchars($a['event_date']) ?>', '<?= htmlspecialchars($a['event_time']) ?>')">Reject</a>
                 </td>
             </tr>
             <?php endforeach; ?>
@@ -175,7 +310,7 @@ function toggleSelectAll(source, formId) {
         <?php else: ?>
         <table>
             <tr>
-                <th>Name</th><th>Event Title</th><th>Date</th><th>Actions</th>
+                <th>Name</th><th>Event Title</th><th>Date Submitted</th><th>Actions</th>
             </tr>
             <?php foreach ($rejected as $r): ?>
             <tr>
@@ -184,8 +319,17 @@ function toggleSelectAll(source, formId) {
                 <td><?= $r['date_submitted'] ?></td>
                 <td>
                     <a href="javascript:void(0)" class="btn btn-view"
-                       onclick="showPopup('<?= htmlspecialchars($r['event_title']) ?>','<?= htmlspecialchars($r['description']) ?>','<?= htmlspecialchars($r['contact']) ?>','<?= $r['file_path'] ?>')">View</a>
-                    <a href="javascript:void(0)" class="btn btn-accept" onclick="confirmAction('?action=ACCEPTED&id=<?= $r['id'] ?>','Accept')">Accept</a>
+                        onclick="showPopup(
+                            '<?= htmlspecialchars($r['event_title']) ?>',
+                            '<?= htmlspecialchars($r['description']) ?>',
+                            '<?= htmlspecialchars($r['contact']) ?>',
+                            '<?= htmlspecialchars($r['user_email']) ?>',
+                            '<?= htmlspecialchars($r['event_date']) ?>',
+                            '<?= htmlspecialchars(date("g:i A", strtotime($r['event_time']))) ?>',
+                            '../../events_user/uploads/<?= htmlspecialchars($r['file_path']) ?>'
+                        )">View</a>
+                    <a href="javascript:void(0)" class="btn btn-accept"
+                       onclick="confirmActionWithEmail('ACCEPTED', <?= $r['id'] ?>, '<?= htmlspecialchars($r['user_email']) ?>', '<?= htmlspecialchars($r['name']) ?>', '<?= htmlspecialchars($r['event_title']) ?>', '<?= htmlspecialchars($r['description']) ?>', '<?= htmlspecialchars($r['event_date']) ?>', '<?= htmlspecialchars($r['event_time']) ?>')">Accept</a>
                 </td>
             </tr>
             <?php endforeach; ?>
@@ -202,7 +346,36 @@ function toggleSelectAll(source, formId) {
         <p><b>Description:</b></p>
         <p id="pDesc"></p>
         <p><b>Contact:</b> <span id="pContact"></span></p>
-        <p><a id="pFile" href="#" target="_blank">Download Submitted File</a></p>
+        <p><b>Email:</b> <span id="pEmail"></span></p>
+        <p><b>Event Date:</b> <span id="pDate"></span></p>
+        <p><b>Event Time:</b> <span id="pTime"></span></p>
+        <p><a id="pFile" href="#" target="_blank">View Attached File</a></p>
+    </div>
+</div>
+
+<!-- Added custom email confirmation modal -->
+<div id="emailConfirmModal" class="email-modal-overlay">
+    <div class="email-modal">
+        <div class="email-modal-header">
+            <h3>Confirm Action</h3>
+        </div>
+        <div class="email-modal-body">
+            <p>You are about to <strong id="modalActionText">accept</strong> the proposal:</p>
+            <p><strong id="modalProposalTitle"></strong></p>
+            <p>Would you like to notify the proposer via email?</p>
+            
+            <div class="email-modal-actions">
+                <button id="proceedWithEmail" class="email-modal-btn email-modal-btn-primary">
+                    Yes, Send Email
+                </button>
+                <button id="proceedWithoutEmail" class="email-modal-btn email-modal-btn-secondary">
+                    No, Just Update Status
+                </button>
+                <button onclick="hideEmailConfirmModal()" class="email-modal-btn email-modal-btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

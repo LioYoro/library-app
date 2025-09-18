@@ -1,0 +1,135 @@
+/* Email Confirmation Modal Styles */
+.email-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.email-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 480px;
+  width: 90%;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+.email-modal-header {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  color: white;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.email-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.email-modal-body {
+  padding: 24px;
+  text-align: center;
+}
+
+.email-modal-body p {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.email-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.email-modal-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.email-modal-btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.email-modal-btn-primary:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.email-modal-btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.email-modal-btn-secondary:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.email-modal-btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.email-modal-btn-danger:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .email-modal {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .email-modal-actions {
+    flex-direction: column;
+  }
+
+  .email-modal-btn {
+    width: 100%;
+  }
+}

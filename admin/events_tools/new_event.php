@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $status = $_POST['status'] ?? 'NOT POSTED';
+    $event_date = $_POST['event_date'];
+    $event_time = $_POST['event_time'];
 
     if (str_word_count($description) > 200) {
         echo "<p style='color:red'>⚠️ Description must be max 200 words.</p>";
@@ -38,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
             }
         }
 
-        $stmt = $pdo->prepare("INSERT INTO post_event (title, description, image, status) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$title, $description, $imageName, $status]);
+        $stmt = $pdo->prepare("INSERT INTO post_event (title, description, image, status, event_date, event_time) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$title, $description, $imageName, $status, $event_date, $event_time]);
         header("Location: new_event.php");
         exit;
     }
@@ -59,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_event'])) {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $status = $_POST['status'] ?? 'NOT POSTED';
+    $event_date = $_POST['event_date'];
+    $event_time = $_POST['event_time'];
 
     if (str_word_count($description) > 200) {
         echo "<p style='color:red'>⚠️ Description must be max 200 words.</p>";
@@ -82,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_event'])) {
             }
         }
 
-        $stmt = $pdo->prepare("UPDATE post_event SET title=?, description=?, image=?, status=?, updated_at=NOW() WHERE id=?");
-        $stmt->execute([$title, $description, $imageName, $status, $id]);
+        $stmt = $pdo->prepare("UPDATE post_event SET title=?, description=?, image=?, status=?, event_date=?, event_time=?, updated_at=NOW() WHERE id=?");
+        $stmt->execute([$title, $description, $imageName, $status, $event_date, $event_time, $id]);
         header("Location: new_event.php");
         exit;
     }
@@ -161,117 +165,149 @@ function previewImage(event) {
 </script>
 </head>
 <body>
-    <h1>📢 Manage Events</h1>
+<h1>📢 Manage Events</h1>
 
-    <!-- Form -->
-    <form action="" method="post" enctype="multipart/form-data">
-        <div class="form-left">
-            <h3><?= $editMode ? "Edit Event" : "Add New Event" ?></h3>
-            <input type="hidden" name="id" value="<?= $editEvent['id'] ?? '' ?>">
-            <label>Title:</label>
-            <input type="text" name="title" required value="<?= htmlspecialchars($editEvent['title'] ?? '') ?>">
+<!-- Form -->
+<form action="" method="post" enctype="multipart/form-data">
+    <div class="form-left">
+        <h3><?= $editMode ? "Edit Event" : "Add New Event" ?></h3>
+        <input type="hidden" name="id" value="<?= $editEvent['id'] ?? '' ?>">
 
-            <label>Description (max 200 words):</label>
-            <textarea name="description" rows="6" required><?= htmlspecialchars($editEvent['description'] ?? '') ?></textarea>
+        <label>Title:</label>
+        <input type="text" name="title" required value="<?= htmlspecialchars($editEvent['title'] ?? '') ?>">
 
-            <label>Status:</label>
-            <select name="status">
-                <option value="POSTED" <?= isset($editEvent['status']) && $editEvent['status']=="POSTED" ? "selected" : "" ?>>POSTED</option>
-                <option value="NOT POSTED" <?= isset($editEvent['status']) && $editEvent['status']=="NOT POSTED" ? "selected" : "" ?>>NOT POSTED</option>
-            </select>
+        <label>Description (max 200 words):</label>
+        <textarea name="description" rows="6" required><?= htmlspecialchars($editEvent['description'] ?? '') ?></textarea>
 
-            <button type="submit" name="<?= $editMode ? "update_event" : "add_event" ?>">
-                <?= $editMode ? "Update Event" : "Add Event" ?>
-            </button>
-            <?php if ($editMode): ?>
-                <a href="new_event.php" style="margin-left:10px;">Cancel Edit</a>
-            <?php endif; ?>
-        </div>
+        <label for="event_date">Event Date:</label>
+        <input type="date" 
+               name="event_date" 
+               id="event_date" 
+               required
+               min="<?= date('Y-m-d', strtotime('+5 days')) ?>" 
+               max="<?= date('Y-m-d', strtotime('+1 month +5 days')) ?>"
+               value="<?= htmlspecialchars($editEvent['event_date'] ?? '') ?>">
 
-        <div class="form-right">
-            <label>Poster (Image):</label>
-            <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
-            <img id="preview" src="<?= $editMode && $editEvent['image'] ? 'uploads/' . htmlspecialchars($editEvent['image']) : '' ?>" class="preview" alt="Preview">
-        </div>
-    </form>
+        <label for="event_time">Event Time:</label>
+        <select name="event_time" id="event_time" required>
+            <?php
+            $start = strtotime("09:00");
+            $end = strtotime("19:30");
+            for ($time = $start; $time <= $end; $time += 30 * 60) {
+                $formatted = date("H:i", $time);
+                $label = date("g:i A", $time);
+                $selected = (isset($editEvent['event_time']) && $editEvent['event_time'] == $formatted) ? "selected" : "";
+                echo "<option value='$formatted' $selected>$label</option>";
+            }
+            ?>
+        </select>
 
-    <!-- Toggle buttons -->
-    <a href="new_event.php" class="btn btn-edit">📋 Active Events</a>
-    <a href="new_event.php?recycle_bin=1" class="btn btn-del">🗑️ Recycle Bin</a>
-    <hr><br>
+        <label>Status:</label>
+        <select name="status">
+            <option value="POSTED" <?= isset($editEvent['status']) && $editEvent['status']=="POSTED" ? "selected" : "" ?>>POSTED</option>
+            <option value="NOT POSTED" <?= isset($editEvent['status']) && $editEvent['status']=="NOT POSTED" ? "selected" : "" ?>>NOT POSTED</option>
+        </select>
 
-    <!-- Events Table -->
-    <?php if (!isset($_GET['recycle_bin'])): ?>
-        <h3>Existing Events</h3>
-        <?php if (empty($events)): ?>
-            <p>No events posted yet.</p>
-        <?php else: ?>
-            <table>
-                <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Image</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-                <?php foreach ($events as $event): ?>
-                <tr>
-                    <td><?= htmlspecialchars($event['title']) ?></td>
-                    <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
-                    <td>
-                        <?php if ($event['image']): ?>
-                            <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
-                        <?php else: ?>
-                            No Image
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($event['status'] === 'POSTED'): ?>
-                            <a href="?set_status=<?= $event['id'] ?>&status=NOT POSTED" class="btn btn-green">POSTED</a>
-                        <?php else: ?>
-                            <a href="?set_status=<?= $event['id'] ?>&status=POSTED" class="btn btn-red">NOT POSTED</a>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <a href="?edit_id=<?= $event['id'] ?>" class="btn btn-edit">✏️ Edit</a>
-                        <a href="?delete_id=<?= $event['id'] ?>" onclick="return confirm('Move this event to recycle bin?')" class="btn btn-del">🗑️ Delete</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
+        <button type="submit" name="<?= $editMode ? "update_event" : "add_event" ?>">
+            <?= $editMode ? "Update Event" : "Add Event" ?>
+        </button>
+        <?php if ($editMode): ?>
+            <a href="new_event.php" style="margin-left:10px;">Cancel Edit</a>
         <?php endif; ?>
+    </div>
+
+    <div class="form-right">
+        <label>Poster (Image):</label>
+        <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+        <img id="preview" src="<?= $editMode && $editEvent['image'] ? 'uploads/' . htmlspecialchars($editEvent['image']) : '' ?>" class="preview" alt="Preview">
+    </div>
+</form>
+
+<!-- Toggle buttons -->
+<a href="new_event.php" class="btn btn-edit">📋 Active Events</a>
+<a href="new_event.php?recycle_bin=1" class="btn btn-del">🗑️ Recycle Bin</a>
+<hr><br>
+
+<!-- Events Table -->
+<?php if (!isset($_GET['recycle_bin'])): ?>
+    <h3>Existing Events</h3>
+    <?php if (empty($events)): ?>
+        <p>No events posted yet.</p>
     <?php else: ?>
-        <h3>♻️ Recycle Bin (Deleted Events - auto purge after 30 days)</h3>
-        <?php if (empty($deletedEvents)): ?>
-            <p>No deleted events found.</p>
-        <?php else: ?>
-            <table>
-                <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Image</th>
-                    <th>Deleted At</th>
-                    <th>Actions</th>
-                </tr>
-                <?php foreach ($deletedEvents as $event): ?>
-                <tr>
-                    <td><?= htmlspecialchars($event['title']) ?></td>
-                    <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
-                    <td>
-                        <?php if ($event['image']): ?>
-                            <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
-                        <?php else: ?>
-                            No Image
-                        <?php endif; ?>
-                    </td>
-                    <td><?= htmlspecialchars($event['updated_at']) ?></td>
-                    <td>
-                        <a href="?restore_id=<?= $event['id'] ?>" class="btn btn-green">♻️ Restore</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        <?php endif; ?>
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Image</th>
+                <th>Event Date</th>
+                <th>Event Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            <?php foreach ($events as $event): ?>
+            <tr>
+                <td><?= htmlspecialchars($event['title']) ?></td>
+                <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
+                <td>
+                    <?php if ($event['image']): ?>
+                        <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
+                    <?php else: ?>
+                        No Image
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($event['event_date']) ?></td>
+                <td><?= htmlspecialchars(date("g:i A", strtotime($event['event_time']))) ?></td>
+                <td>
+                    <?php if ($event['status'] === 'POSTED'): ?>
+                        <a href="?set_status=<?= $event['id'] ?>&status=NOT POSTED" class="btn btn-green">POSTED</a>
+                    <?php else: ?>
+                        <a href="?set_status=<?= $event['id'] ?>&status=POSTED" class="btn btn-red">NOT POSTED</a>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <a href="?edit_id=<?= $event['id'] ?>" class="btn btn-edit">✏️ Edit</a>
+                    <a href="?delete_id=<?= $event['id'] ?>" onclick="return confirm('Move this event to recycle bin?')" class="btn btn-del">🗑️ Delete</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
     <?php endif; ?>
+<?php else: ?>
+    <h3>♻️ Recycle Bin (Deleted Events - auto purge after 30 days)</h3>
+    <?php if (empty($deletedEvents)): ?>
+        <p>No deleted events found.</p>
+    <?php else: ?>
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Image</th>
+                <th>Event Date</th>
+                <th>Event Time</th>
+                <th>Deleted At</th>
+                <th>Actions</th>
+            </tr>
+            <?php foreach ($deletedEvents as $event): ?>
+            <tr>
+                <td><?= htmlspecialchars($event['title']) ?></td>
+                <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
+                <td>
+                    <?php if ($event['image']): ?>
+                        <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
+                    <?php else: ?>
+                        No Image
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($event['event_date']) ?></td>
+                <td><?= htmlspecialchars(date("g:i A", strtotime($event['event_time']))) ?></td>
+                <td><?= htmlspecialchars($event['updated_at']) ?></td>
+                <td>
+                    <a href="?restore_id=<?= $event['id'] ?>" class="btn btn-green">♻️ Restore</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+    <?php endif; ?>
+<?php endif; ?>
 </body>
 </html>

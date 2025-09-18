@@ -118,7 +118,7 @@ if (isset($_SESSION['user_id'])) {
 
   <nav class="navigation" style="display: flex; align-items: center; gap: 30px;">
     <a href="/library-app/index.php" style="color: white; text-decoration: none;">Home</a>
-    <a href="/library-app/views/events.php" style="color: white; text-decoration: none;">Events</a>
+    <a href="/library-app/events_user/index.php" style="color: white; text-decoration: none;">Events</a>
     <a href="/library-app/views/about.php" style="color: white; text-decoration: none;">About</a>
     <a href="/library-app/views/contact.php" style="color: white; text-decoration: none;">Contact</a>
     <?php if (isset($_SESSION['first_name'])): ?>

@@ -28,8 +28,9 @@
                 
                 <div class="event-wrapper">
                     <?php foreach ($events as $index => $event): ?>
-                        <div class="event-card event-slide <?= $index === 0 ? 'active' : '' ?>" 
-                             style="display: <?= $index === 0 ? 'flex' : 'none' ?>; 
+                        <a href="/library-app/events_user/event_detail.php?id=<?= $event['id'] ?>"
+                            class="event-card event-slide <?= $index === 0 ? 'active' : '' ?>" 
+                            style="display: <?= $index === 0 ? 'flex' : 'none' ?>; 
                                     align-items: center; 
                                     gap: 25px; 
                                     margin: 0 auto; 
@@ -38,7 +39,10 @@
                                     border-radius: 10px; 
                                     background: #fafafa; 
                                     width: 90%; 
-                                    min-height: 280px;">
+                                    min-height: 280px; 
+                                    text-decoration:none; 
+                                    color:inherit;">
+
                             
                             <!-- Left: Image (bigger now) -->
                             <?php if (!empty($event['image'])): ?>
@@ -60,7 +64,7 @@
                                     <?= nl2br(htmlspecialchars($event['description'])) ?>
                                 </p>
                             </div>
-                        </div>
+                            </a>
                     <?php endforeach; ?>
                 </div>
 
