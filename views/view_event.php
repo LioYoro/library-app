@@ -23,7 +23,8 @@
             </div>
         <?php else: ?>
             <div class="event-slider" style="position: relative; text-align:center;">
-                <button class="event-nav prev" onclick="prevEvent()">&#10094;</button>
+                <!-- Left Button -->
+                <button id="eventPrevBtn" class="event-nav prev">&#10094;</button>
                 
                 <div class="event-wrapper">
                     <?php foreach ($events as $index => $event): ?>
@@ -58,13 +59,13 @@
                                 <p style="margin-top: 12px; font-size: 16px; color: #333; line-height: 1.6;">
                                     <?= nl2br(htmlspecialchars($event['description'])) ?>
                                 </p>
-                                
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
 
-                <button class="event-nav next" onclick="nextEvent()">&#10095;</button>
+                <!-- Right Button -->
+                <button id="eventNextBtn" class="event-nav next">&#10095;</button>
             </div>
         <?php endif; ?>
     </div>
@@ -91,21 +92,23 @@
 
 <script>
 let currentEvent = 0;
-const slides = document.querySelectorAll('.event-slide');
+const eventSlides = document.querySelectorAll('.event-slide');
+const eventPrevBtn = document.getElementById('eventPrevBtn');
+const eventNextBtn = document.getElementById('eventNextBtn');
 
 function showEvent(index) {
-    slides.forEach((slide, i) => {
+    eventSlides.forEach((slide, i) => {
         slide.style.display = (i === index) ? 'flex' : 'none';
     });
 }
 
-function nextEvent() {
-    currentEvent = (currentEvent + 1) % slides.length;
+eventNextBtn.addEventListener('click', () => {
+    currentEvent = (currentEvent + 1) % eventSlides.length;
     showEvent(currentEvent);
-}
+});
 
-function prevEvent() {
-    currentEvent = (currentEvent - 1 + slides.length) % slides.length;
+eventPrevBtn.addEventListener('click', () => {
+    currentEvent = (currentEvent - 1 + eventSlides.length) % eventSlides.length;
     showEvent(currentEvent);
-}
+});
 </script>

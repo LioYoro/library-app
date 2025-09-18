@@ -86,11 +86,11 @@ $topBorrowed = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $topReserved = $pdo->query("
-    SELECT r.book_title, ANY_VALUE(b.`CALL NUMBER`) AS call_number, COUNT(*) AS total_reservations
+    SELECT r.book_title, b.`CALL NUMBER` AS call_number, COUNT(*) AS total_reservations
     FROM reservations r
     LEFT JOIN books b ON r.book_title = b.TITLE
     WHERE r.status IN ('pending','borrowed') AND r.done=1
-    GROUP BY r.book_title
+    GROUP BY r.book_title, b.`CALL NUMBER`
     ORDER BY total_reservations DESC
     LIMIT 50
 ")->fetchAll(PDO::FETCH_ASSOC);

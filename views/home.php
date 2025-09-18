@@ -260,6 +260,9 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
         -->
     </div>
 
+    <!-- ANNOUNCEMENT SECTION -->
+    <?php include "views/view_announcements.php"; ?>
+
      <!-- EVENTSECTION -->
     <?php include "views/view_event.php"; ?>
 

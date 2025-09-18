@@ -1,6 +1,5 @@
 <?php
 session_start();
-$pageTitle = "Book Status Management";
 
 // Include database connection
 include('../../includes/db.php'); // Adjust path as needed
@@ -67,6 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_id'], $_POST['ne
     exit;
 }
 
+$pageTitle = "Book Status Management";
+
+// Admin layout (header, sidebar, footer)
+include(__DIR__ . '/../../admin/includes/header.php');
+include(__DIR__ . '/../../admin/includes/sidebar.php');
+
 // Fetch all books
 $booksQuery = "SELECT id, TITLE, AUTHOR, status FROM books ORDER BY TITLE ASC";
 $stmt = $conn->query($booksQuery);
@@ -76,17 +81,19 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title><?= $pageTitle ?></title>
-<link rel="stylesheet" href="book_status.css">
+    <meta charset="UTF-8">
+    <title><?= $pageTitle ?></title>
+    <link rel="stylesheet" href="book_status.css">
 </head>
 <body>
-<h1><?= $pageTitle ?></h1>
-<a href="../../admin/reservations.php" class="btn-back">← Back to Admin Hub</a>
+    <!-- Updated main content wrapper to match reference structure with proper sidebar spacing -->
+    <div id="main-content" class="flex-1 flex flex-col min-w-0 ml-[15rem] h-screen transition-all duration-300 p-6 bg-gray-100">
+        <h1><?= $pageTitle ?></h1>
+        <a href="../../admin/reservations.php" class="btn-back">← Back to Reservation Section</a>
 
-<div class="search-container">
-    <input type="text" id="bookSearch" placeholder="Search by book title..." onkeyup="filterBooks()">
-</div>
+        <div class="search-container">
+            <input type="text" id="bookSearch" placeholder="Search by book title..." onkeyup="filterBooks()">
+        </div>
 
 <table id="booksTable">
     <thead>

@@ -5,17 +5,22 @@ session_start();
 $pdo = new PDO("mysql:host=localhost;dbname=library_test_db", "root", "");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Initialize edit mode
+// =================== AUTO PURGE ===================
+// 30 days for DELETED events
+$pdo->exec("DELETE FROM post_event WHERE status='DELETED' AND updated_at < NOW() - INTERVAL 30 DAY");
+// 1 year for reports
+$pdo->exec("DELETE FROM post_event_report WHERE created_at < NOW() - INTERVAL 1 YEAR");
+
+// =================== VARIABLES ===================
 $editMode = false;
 $editEvent = null;
 
-// Handle new event submission
+// =================== ADD EVENT ===================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $status = $_POST['status'] ?? 'NOT POSTED';
 
-    // enforce 200 words limit
     if (str_word_count($description) > 200) {
         echo "<p style='color:red'>⚠️ Description must be max 200 words.</p>";
     } else {
@@ -40,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
     }
 }
 
-// Handle edit mode
+// =================== EDIT MODE ===================
 if (isset($_GET['edit_id'])) {
     $editMode = true;
     $stmt = $pdo->prepare("SELECT * FROM post_event WHERE id=?");
@@ -48,7 +53,7 @@ if (isset($_GET['edit_id'])) {
     $editEvent = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// Handle edit submission
+// =================== UPDATE EVENT ===================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_event'])) {
     $id = (int)$_POST['id'];
     $title = trim($_POST['title']);
@@ -84,33 +89,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_event'])) {
     }
 }
 
-// Handle status change
+// =================== CHANGE STATUS ===================
 if (isset($_GET['set_status']) && isset($_GET['status'])) {
     $id = (int)$_GET['set_status'];
     $newStatus = $_GET['status'];
-    $stmt = $pdo->prepare("UPDATE post_event SET status=? WHERE id=?");
+    $stmt = $pdo->prepare("UPDATE post_event SET status=?, updated_at=NOW() WHERE id=?");
     $stmt->execute([$newStatus, $id]);
     header("Location: new_event.php");
     exit;
 }
 
-// Handle delete
+// =================== DELETE (MOVE TO BIN) ===================
 if (isset($_GET['delete_id'])) {
     $id = (int)$_GET['delete_id'];
-    $stmt = $pdo->prepare("SELECT image FROM post_event WHERE id=?");
-    $stmt->execute([$id]);
-    $image = $stmt->fetchColumn();
-    if ($image && file_exists(__DIR__ . "/uploads/" . $image)) {
-        unlink(__DIR__ . "/uploads/" . $image);
-    }
-    $stmt = $pdo->prepare("DELETE FROM post_event WHERE id=?");
+    $stmt = $pdo->prepare("UPDATE post_event SET status='DELETED', updated_at=NOW() WHERE id=?");
     $stmt->execute([$id]);
     header("Location: new_event.php");
     exit;
 }
 
-// Fetch all events
-$events = $pdo->query("SELECT * FROM post_event ORDER BY created_at DESC")->fetchAll();
+// =================== RESTORE ===================
+if (isset($_GET['restore_id'])) {
+    $id = (int)$_GET['restore_id'];
+    $stmt = $pdo->prepare("UPDATE post_event SET status='NOT POSTED', updated_at=NOW() WHERE id=?");
+    $stmt->execute([$id]);
+    header("Location: new_event.php?recycle_bin=1");
+    exit;
+}
+
+// =================== FETCH ===================
+$events = $pdo->query("SELECT * FROM post_event WHERE status!='DELETED' ORDER BY created_at DESC")->fetchAll();
+$deletedEvents = [];
+if (isset($_GET['recycle_bin'])) {
+    $stmt = $pdo->query("SELECT * FROM post_event WHERE status='DELETED' ORDER BY updated_at DESC");
+    $deletedEvents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
 <!DOCTYPE html>
@@ -182,44 +195,83 @@ function previewImage(event) {
         </div>
     </form>
 
+    <!-- Toggle buttons -->
+    <a href="new_event.php" class="btn btn-edit">📋 Active Events</a>
+    <a href="new_event.php?recycle_bin=1" class="btn btn-del">🗑️ Recycle Bin</a>
+    <hr><br>
+
     <!-- Events Table -->
-    <h3>Existing Events</h3>
-    <?php if (empty($events)): ?>
-        <p>No events posted yet.</p>
+    <?php if (!isset($_GET['recycle_bin'])): ?>
+        <h3>Existing Events</h3>
+        <?php if (empty($events)): ?>
+            <p>No events posted yet.</p>
+        <?php else: ?>
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Image</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                <?php foreach ($events as $event): ?>
+                <tr>
+                    <td><?= htmlspecialchars($event['title']) ?></td>
+                    <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
+                    <td>
+                        <?php if ($event['image']): ?>
+                            <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
+                        <?php else: ?>
+                            No Image
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($event['status'] === 'POSTED'): ?>
+                            <a href="?set_status=<?= $event['id'] ?>&status=NOT POSTED" class="btn btn-green">POSTED</a>
+                        <?php else: ?>
+                            <a href="?set_status=<?= $event['id'] ?>&status=POSTED" class="btn btn-red">NOT POSTED</a>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <a href="?edit_id=<?= $event['id'] ?>" class="btn btn-edit">✏️ Edit</a>
+                        <a href="?delete_id=<?= $event['id'] ?>" onclick="return confirm('Move this event to recycle bin?')" class="btn btn-del">🗑️ Delete</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php endif; ?>
     <?php else: ?>
-        <table>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Image</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            <?php foreach ($events as $event): ?>
-            <tr>
-                <td><?= htmlspecialchars($event['title']) ?></td>
-                <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
-                <td>
-                    <?php if ($event['image']): ?>
-                        <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
-                    <?php else: ?>
-                        No Image
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <?php if ($event['status'] === 'POSTED'): ?>
-                        <a href="?set_status=<?= $event['id'] ?>&status=NOT POSTED" class="btn btn-green">POSTED</a>
-                    <?php else: ?>
-                        <a href="?set_status=<?= $event['id'] ?>&status=POSTED" class="btn btn-red">NOT POSTED</a>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <a href="?edit_id=<?= $event['id'] ?>" class="btn btn-edit">✏️ Edit</a>
-                    <a href="?delete_id=<?= $event['id'] ?>" onclick="return confirm('Delete this event?')" class="btn btn-del">🗑️ Delete</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </table>
+        <h3>♻️ Recycle Bin (Deleted Events - auto purge after 30 days)</h3>
+        <?php if (empty($deletedEvents)): ?>
+            <p>No deleted events found.</p>
+        <?php else: ?>
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Image</th>
+                    <th>Deleted At</th>
+                    <th>Actions</th>
+                </tr>
+                <?php foreach ($deletedEvents as $event): ?>
+                <tr>
+                    <td><?= htmlspecialchars($event['title']) ?></td>
+                    <td><?= htmlspecialchars(substr($event['description'],0,100)) ?>...</td>
+                    <td>
+                        <?php if ($event['image']): ?>
+                            <a href="uploads/<?= htmlspecialchars($event['image']) ?>" target="_blank">View Image</a>
+                        <?php else: ?>
+                            No Image
+                        <?php endif; ?>
+                    </td>
+                    <td><?= htmlspecialchars($event['updated_at']) ?></td>
+                    <td>
+                        <a href="?restore_id=<?= $event['id'] ?>" class="btn btn-green">♻️ Restore</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php endif; ?>
     <?php endif; ?>
 </body>
 </html>
