@@ -68,74 +68,97 @@ if (isset($_SESSION['user_id'])) {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($user) {
-        // Add debug information
-        $debugInfo['user_data'] = $user;
-        $debugInfo['user_id'] = $_SESSION['user_id'];
-        
-        // Prepare the data to send to Flask API
+        $debugInfo['user'] = $user;
+
         $postData = [
             'user_id' => $_SESSION['user_id'],
             'education_level' => $user['education_level'],
             'major' => $user['major'],
             'strand' => $user['strand']
         ];
-        
-        $debugInfo['post_data'] = $postData;
-        
+
         $flask_api_url = 'http://127.0.0.1:5001/recommend_by_field';
         $ch = curl_init($flask_api_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen(json_encode($postData))
-        ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Add timeout
-        
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        
-        $debugInfo['http_code'] = $httpCode;
-        $debugInfo['raw_response'] = $response;
-        
-        if (curl_errno($ch)) {
-            $debugInfo['curl_error'] = curl_error($ch);
-            echo '<div style="color: red; padding: 10px; margin: 10px; border: 1px solid red; background: #ffe6e6;">cURL Error: ' . curl_error($ch) . '</div>';
-            error_log("cURL Error for Flask API: " . curl_error($ch));
-            $recommendedBooks = [];
-        } else {
-            $data = json_decode($response, true);
-            $debugInfo['decoded_data'] = $data;
-            $debugInfo['json_error'] = json_last_error_msg();
-            
-            // Check if 'recommendations' key exists and is an array
-            if (json_last_error() === JSON_ERROR_NONE && isset($data['recommendations']) && is_array($data['recommendations'])) {
-                $recommendedBooks = $data['recommendations'];
-                $debugInfo['recommendation_count'] = count($recommendedBooks);
-
-                // 🔹 Enrich recommendations with cover images from DB
-                foreach ($recommendedBooks as &$recBook) {
-                    $stmt = $pdo->prepare("SELECT cover_image_url FROM books WHERE TITLE = ? LIMIT 1");
-                    $stmt->execute([$recBook['TITLE']]);
-                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $recBook['cover_image_url'] = $row['cover_image_url'] ?? 'assets/Noimage.jpg';
-                }
-                unset($recBook);
-
-            } else {
-                echo '<div style="color: red; padding: 10px; margin: 10px; border: 1px solid red; background: #ffe6e6;">
-                    <strong>Flask API Issue:</strong><br>
-                    HTTP Code: ' . $httpCode . '<br>
-                    Response: ' . htmlspecialchars($response) . '<br>
-                    JSON Error: ' . json_last_error_msg() . '
-                </div>';
-                error_log("Flask response issue for user " . $_SESSION['user_id'] . ". Response: " . $response . ". JSON Error: " . json_last_error_msg());
-                $recommendedBooks = [];
-            }
-
-        }
         curl_close($ch);
+
+        $data = json_decode($response, true);
+        $debugInfo['http_code'] = $httpCode;
+        $debugInfo['response'] = $response;
+
+        if (json_last_error() === JSON_ERROR_NONE && isset($data['recommendations']) && is_array($data['recommendations'])) {
+            error_log("🔍 Flask API returned " . count($data['recommendations']) . " recommendations for user {$_SESSION['user_id']} (strand: {$user['strand']}):");
+            foreach ($data['recommendations'] as $index => $rec) {
+                error_log("  [$index] API Title: '{$rec['TITLE']}'");
+            }
+            
+            foreach ($data['recommendations'] as $rec) {
+                if (!isset($rec['TITLE'])) continue;
+
+                $book = null;
+                $matchType = 'none';
+                
+                $stmt = $pdo->prepare("SELECT * FROM books WHERE LOWER(TITLE) = LOWER(?) LIMIT 1");
+                $stmt->execute([$rec['TITLE']]);
+                $book = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($book) $matchType = 'exact';
+                
+                if (!$book) {
+                    $stmt = $pdo->prepare("SELECT * FROM books WHERE LOWER(TITLE) LIKE LOWER(?) LIMIT 1");
+                    $stmt->execute(['%' . $rec['TITLE'] . '%']);
+                    $book = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($book) $matchType = 'partial_api_contains_db';
+                }
+                
+                if (!$book) {
+                    $stmt = $pdo->prepare("SELECT * FROM books WHERE LOWER(?) LIKE LOWER(CONCAT('%', TITLE, '%')) LIMIT 1");
+                    $stmt->execute([$rec['TITLE']]);
+                    $book = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($book) $matchType = 'partial_db_contains_api';
+                }
+
+                if (!$book) {
+                    $apiWords = explode(' ', strtolower($rec['TITLE']));
+                    $apiWords = array_filter($apiWords, function($word) {
+                        return strlen($word) > 3; // Only use words longer than 3 characters
+                    });
+                    
+                    if (count($apiWords) >= 2) {
+                        $searchPattern = '%' . implode('%', array_slice($apiWords, 0, 3)) . '%';
+                        $stmt = $pdo->prepare("SELECT * FROM books WHERE LOWER(TITLE) LIKE ? LIMIT 1");
+                        $stmt->execute([$searchPattern]);
+                        $book = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($book) $matchType = 'word_based';
+                    }
+                }
+
+                if ($book) {
+                    $book['cover_image_url'] = $book['cover_image_url'] ?? 'assets/Noimage.jpg';
+                    $recommendedBooks[] = $book;
+
+                    error_log("✅ MATCH FOUND ($matchType) for user {$_SESSION['user_id']}: API='{$rec['TITLE']}' -> DB='{$book['TITLE']}' | Category: " . ($book['General_Category'] ?? 'N/A'));
+                } else {
+                    error_log("❌ NO MATCH for user {$_SESSION['user_id']}: API title='{$rec['TITLE']}' | User strand: {$user['strand']}");
+                    
+                    // Show some sample titles from database for debugging
+                    $sampleStmt = $pdo->prepare("SELECT TITLE FROM books WHERE LOWER(TITLE) LIKE ? LIMIT 3");
+                    $sampleStmt->execute(['%' . strtolower(substr($rec['TITLE'], 0, 10)) . '%']);
+                    $samples = $sampleStmt->fetchAll(PDO::FETCH_COLUMN);
+                    if ($samples) {
+                        error_log("   Similar DB titles found: " . implode(' | ', $samples));
+                    }
+                }
+            }
+        } else {
+            error_log("Flask API issue for user {$_SESSION['user_id']}: " . $response);
+        }
     } else {
         $debugInfo['error'] = "User not found in database";
         error_log("User with ID " . $_SESSION['user_id'] . " not found in database for recommendations.");
@@ -158,13 +181,7 @@ if (isset($_SESSION['user_id'])) {
     $offset = ($likePage - 1) * $likesPerPage;
     
     // Fetch paginated liked books
-    $likedStmt = $pdo->prepare("
-        SELECT b.* FROM book_feedback bf
-        JOIN books b ON b.TITLE = bf.book_title
-        WHERE bf.user_id = ? AND bf.feedback = 'like'
-        ORDER BY bf.id DESC
-        LIMIT $likesPerPage OFFSET $offset
-    ");
+    $likedStmt = $pdo->prepare("SELECT b.* FROM book_feedback bf JOIN books b ON b.TITLE = bf.book_title WHERE bf.user_id = ? AND bf.feedback = 'like' ORDER BY bf.id DESC LIMIT $likesPerPage OFFSET $offset");
     $likedStmt->execute([$userId]);
     $likedBooks = $likedStmt->fetchAll();
     
@@ -181,45 +198,7 @@ $commentsPerPage = 5;
 $commentOffset = ($commentedPage - 1) * $commentsPerPage;
 
 // Fetch most commented books (paginated)
-$commentedStmt = $pdo->prepare("
-    SELECT b.`id`, 
-           b.`TITLE`, 
-           b.`AUTHOR`, 
-           b.`ACCESSION NO.`, 
-           b.`CALL NUMBER`, 
-           b.`DATE ACQUIRED`, 
-           b.`SUMMARY`, 
-           b.`KEYWORDS`, 
-           b.`General_Category`, 
-           b.`Sub_Category`, 
-           b.`Like`, 
-           b.`Dislike`, 
-           b.`date_added`, 
-           b.`status`,
-           b.`cover_image_url`,
-           COUNT(c.id) AS comment_count
-    FROM comments c
-    JOIN books b ON b.`TITLE` = c.book_title
-    GROUP BY b.`id`, 
-             b.`TITLE`, 
-             b.`AUTHOR`, 
-             b.`ACCESSION NO.`, 
-             b.`CALL NUMBER`, 
-             b.`DATE ACQUIRED`, 
-             b.`SUMMARY`, 
-             b.`KEYWORDS`, 
-             b.`General_Category`, 
-             b.`Sub_Category`, 
-             b.`Like`, 
-             b.`Dislike`, 
-             b.`date_added`, 
-             b.`status`,
-             b.`cover_image_url`
-    ORDER BY comment_count DESC
-    LIMIT $commentsPerPage OFFSET $commentOffset
-");
-
-
+$commentedStmt = $pdo->prepare("SELECT b.`id`, b.`TITLE`, b.`AUTHOR`, b.`ACCESSION NO.`, b.`CALL NUMBER`, b.`DATE ACQUIRED`, b.`SUMMARY`, b.`KEYWORDS`, b.`General_Category`, b.`Sub_Category`, b.`Like`, b.`Dislike`, b.`date_added`, b.`status`, b.`cover_image_url`, COUNT(c.id) AS comment_count FROM comments c JOIN books b ON b.`TITLE` = c.book_title GROUP BY b.`id`, b.`TITLE`, b.`AUTHOR`, b.`ACCESSION NO.`, b.`CALL NUMBER`, b.`DATE ACQUIRED`, b.`SUMMARY`, b.`KEYWORDS`, b.`General_Category`, b.`Sub_Category`, b.`Like`, b.`Dislike`, b.`date_added`, b.`status`, b.`cover_image_url` ORDER BY comment_count DESC LIMIT $commentsPerPage OFFSET $commentOffset");
 $commentedStmt->execute();
 $topCommented = $commentedStmt->fetchAll();
 
@@ -263,7 +242,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
     <!-- ANNOUNCEMENT SECTION -->
     <?php include "views/view_announcements.php"; ?>
 
-     <!-- EVENTSECTION -->
+    <!-- EVENTSECTION -->
     <?php include "views/view_event.php"; ?>
 
 
@@ -271,33 +250,29 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
     <div style="display: block; width: 100%; margin-bottom: 40px;">
         <div class="flex flex-col md:flex-row gap-6" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
 
-         <!-- LEFT Sidebar -->
-<div class="w-full md:w-1/5 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
-    <h3 class="aside-title text-center font-bold">E-Resources</h3>
+            <!-- LEFT Sidebar -->
+            <div class="w-full md:w-1/5 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
+                <h3 class="aside-title text-center font-bold">E-Resources</h3>
 
-    <div class="space-y-6 text-center">
-        <!-- First Image + Name -->
-        <a href="https://web.nlp.gov.ph/" target="_blank">
-        <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
-            <img src="EResources/NLPLogo.png"
-                alt="National Library of the Philippines"
-                class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
-            <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">National Library of the Philippines</p>
-        </div>
-        </a>
+                <div class="space-y-6 text-center">
+                    <!-- First Image + Name -->
+                    <a href="https://web.nlp.gov.ph/" target="_blank">
+                        <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
+                            <img src="EResources/NLPLogo.png" alt="National Library of the Philippines" class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
+                            <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">National Library of the Philippines</p>
+                        </div>
+                    </a>
 
-        <!-- Second Image + Name -->
-        <a href="https://eportal.nlp.gov.ph/" target="_blank">
-  <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
-      <img src="EResources/NLPLogo.png"
-           alt="NLP E-Portal"
-           class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
-      <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">NLP E-Portal</p>
-  </div>
-</a>
+                    <!-- Second Image + Name -->
+                    <a href="https://eportal.nlp.gov.ph/" target="_blank">
+                        <div class="group cursor-pointer border rounded-lg p-2 transition-all duration-300 transform hover:scale-105 hover:bg-sky-100">
+                            <img src="EResources/NLPLogo.png" alt="NLP E-Portal" class="mx-auto rounded-lg shadow-md transition-transform duration-300 transform group-hover:scale-110">
+                            <p class="mt-2 font-semibold text-gray-900 text-center group-hover:text-black">NLP E-Portal</p>
+                        </div>
+                    </a>
 
-    </div>
-</div>
+                </div>
+            </div>
 
             <!-- Main Content Panel -->
             <aside class="w-full md:w-5/6 border border-black rounded-lg px-4 py-4 space-y-6 text-sm bg-white">
@@ -315,16 +290,14 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <h2 class="section-title">Because you viewed: <?= htmlspecialchars($viewedBook['TITLE']) ?></h2>
                         <div class="book-grid">
                             <?php foreach ($recommendations as $b): ?>
-                               <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>"class="book-card blue flex items-center gap-4 p-2">
-                                <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                    alt="Book cover" 
-                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card blue flex items-center gap-4 p-2">
+                                    <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" alt="Book cover" class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                     <div class="flex flex-col">
-                                    <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                    <div class="book-meta"><?php if (!empty($b['AUTHOR'])): ?><div><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?></div>
-                                    <div class="book-meta"><?php if (!empty($b['CALL NUMBER'])): ?><div><strong><em>Call Number: </em></strong><?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?></div>
-                                    <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-                                </div>
+                                        <div class="book-title"><?= htmlspecialchars($b['TITLE']) ?></div>
+                                        <div class="book-meta"><?php if (!empty($b['AUTHOR'])): ?><div><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?></div>
+                                        <div class="book-meta"><?php if (!empty($b['CALL NUMBER'])): ?><div><strong><em>Call Number: </em></strong><?= htmlspecialchars($b['CALL NUMBER']) ?></div><?php endif; ?></div>
+                                        <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                                    </div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -336,14 +309,12 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <div class="book-grid">
                             <?php foreach ($trending as $t): ?>
                                 <a href="views/book_detail.php?title=<?= urlencode($t['TITLE']) ?>" class="book-card yellow flex items-center gap-4 p-2">
-                                    <img src="<?= htmlspecialchars($t['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                    alt="Book cover" 
-                                    class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                    <img src="<?= htmlspecialchars($t['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" alt="Book cover" class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                     <div class="flex flex-col">
-                                    <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
-                                    <?php if (!empty($t['CALL NUMBER'])): ?><div><?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
-                                    <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
-                                </div>
+                                        <div class="book-title"><?= htmlspecialchars($t['TITLE']) ?></div>
+                                        <?php if (!empty($t['CALL NUMBER'])): ?><div><?= htmlspecialchars($t['CALL NUMBER']) ?></div><?php endif; ?>
+                                        <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $t['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $t['TITLE']) ?> Comments</div>
+                                    </div>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -356,14 +327,12 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <div class="book-grid">
                                 <?php foreach ($otherWorks as $w): ?>
                                     <a href="views/book_detail.php?title=<?= urlencode($w['TITLE']) ?>" class="book-card purple flex items-center gap-4 p-2">
-                                    <img src="<?= htmlspecialchars($w['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                        alt="Book cover" 
-                                        class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                        <img src="<?= htmlspecialchars($w['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" alt="Book cover" class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                         <div class="flex flex-col">
-                                        <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
-                                        <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
-                                        <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
-                                    </div>
+                                            <div class="book-title"><?= htmlspecialchars($w['TITLE']) ?></div>
+                                            <?php if (!empty($w['CALL NUMBER'])): ?><div><?= htmlspecialchars($w['CALL NUMBER']) ?></div><?php endif; ?>
+                                            <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $w['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $w['TITLE']) ?> Comments</div>
+                                        </div>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
@@ -379,14 +348,12 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         $stmt = $pdo->query("SELECT * FROM books ORDER BY `Like` DESC LIMIT 6");
                         foreach ($stmt as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="book-card orange flex items-center gap-4 p-2">
-                               <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                alt="Book cover" 
-                                class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
+                                <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" alt="Book cover" class="w-14 h-20 object-cover rounded-lg shadow-md transform transition duration-200 hover:scale-110 flex-shrink-0">
                                 <div class="flex flex-col">
-                                <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta"><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
-                                <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
-                            </div>
+                                    <div class="book-title small"><?= htmlspecialchars($b['TITLE']) ?></div>
+                                    <?php if (!empty($b['AUTHOR'])): ?><div class="book-meta"><strong><em>Author: </em></strong><?= htmlspecialchars($b['AUTHOR']) ?></div><?php endif; ?>
+                                    <div class="book-meta"><ion-icon name="thumbs-up"></ion-icon> <?= $b['Like'] ?? 0 ?> Likes • 💬 <?= getCommentCount($pdo, $b['TITLE']) ?> Comments</div>
+                                </div>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -404,9 +371,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                             <?php foreach ($likedBooks as $b): ?>
                                 <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                     <div class="aside-entry">
-                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                        class="aside-image" 
-                                        alt="Book cover">
+                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" class="aside-image" alt="Book cover">
                                         <div>
                                             <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                             <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
@@ -426,7 +391,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                 
                 <!-- Recommended -->
                 <section class="aside-box" id="recommended-section">
-                    <h3 class="aside-title"> Recommended for Your Field</h3>
+                    <h3 class="aside-title">Recommended for Your Field</h3>
                     <?php if (empty($recommendedBooks)): ?>
                         <p class="aside-empty">No recommendations available for your field.</p>
                         <?php if (isset($_SESSION['user_id'])): ?>
@@ -437,22 +402,24 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <?php endif; ?>
                     <?php else: ?>
                         <?php foreach ($recommendedBooks as $b): ?>
+                            <!-- Fixed link path and improved image handling -->
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                 <div class="aside-entry">
-                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                        class="aside-image" 
-                                        alt="Book cover">
+                                    <!-- Improved image src handling with proper fallback -->
+                                    <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" alt="Book cover" class="aside-image" onerror="this.src='assets/Noimage.jpg'; this.onerror=null;">
                                     <div>
                                         <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
-                                        <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? '') ?></div>
+                                        <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR'] ?? 'Unknown') ?></div>
                                         <div class="aside-meta">Category: <?= htmlspecialchars($b['General_Category']) ?></div>
+                                        <!-- Added like count display -->
+                                        <div class="aside-meta">👍 <?= $b['Like'] ?? 0 ?> Likes</div>
                                     </div>
                                 </div>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </section>
-                
+
                 <!-- Commented -->
                 <section class="aside-box" id="commented-section">
                     <h3 class="aside-title">Top Commented Books</h3>
@@ -462,9 +429,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
                         <?php foreach ($topCommented as $b): ?>
                             <a href="views/book_detail.php?title=<?= urlencode($b['TITLE']) ?>" class="aside-link">
                                 <div class="aside-entry">
-                                        <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" 
-                                        class="aside-image" 
-                                        alt="Book cover">
+                                    <img src="<?= htmlspecialchars($b['cover_image_url'] ?? 'assets/Noimage.jpg') ?>" class="aside-image" alt="Book cover" onerror="this.src='assets/Noimage.jpg'; this.onerror=null;">
                                     <div>
                                         <div class="aside-entry-title"><?= htmlspecialchars($b['TITLE']) ?></div>
                                         <div class="aside-author">Author: <?= htmlspecialchars($b['AUTHOR']) ?></div>
@@ -489,12 +454,7 @@ $totalCommentedPages = max(1, ceil($totalCommentedBooks / $commentsPerPage));
         <div class="google-map-container">
             <h2 class="section-title">Visit Us!</h2>
             <div class="map-wrapper">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph"
-                    class="map-frame"
-                    allowfullscreen=""
-                    loading="lazy">
-                </iframe>
+                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2295.983182897871!2d121.03267637330832!3d14.578091391887153!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c84b4bd0a891%3A0x882a0fec03716ed3!2sKaban%20ng%20Hiyas%3A%20Cultural%20Center%2C%20Historical%20Museum%20and%20Convention%20Hall!5e0!3m2!1sen!2sph!4v1753438230250!5m2!1sen!2sph" class="map-frame" allowfullscreen="" loading="lazy"></iframe>
             </div>
         </div>
     </section>

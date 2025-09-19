@@ -245,16 +245,21 @@ class Recommender:
     }
 
     def recommend_by_major_or_strand(self, education_level, field, top_n=5):
+
         if education_level.lower() == "college":
-            categories = self.MAJOR_CATEGORY_MAP.get(field, [])
+            mapped_categories = self.MAJOR_CATEGORY_MAP.get(field, [])
         else:
-            categories = self.STRAND_CATEGORY_MAP.get(field, [])
+            mapped_categories = self.STRAND_CATEGORY_MAP.get(field, [])
         
-        if not categories:
+        if not mapped_categories:
             return []
-        # Filter the DataFrame based on the categories
-        filtered_books = self.df[self.df['General_Category'].str.contains('|'.join(categories), na=False)]
-        
+
+        # Filter books by mapped categories
+        filtered_books = self.df[self.df['General_Category'].isin(mapped_categories)]
+
+        # If nothing matches, fallback to books that share at least one keyword or any category
+        if filtered_books.empty:
+            filtered_books = self.df.copy()  # include all books
+
         recommendedBooks = filtered_books.nlargest(top_n, 'Like')[['TITLE', 'AUTHOR', 'General_Category']]
-        
         return recommendedBooks.to_dict(orient='records')

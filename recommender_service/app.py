@@ -217,20 +217,15 @@ def recommend_by_field():
     import mysql.connector
     data = request.json
     user_id = data.get('user_id')
-    
-    # Change from:
-    # print(f"DEBUG: Received request for user_id: {user_id}")
-    # print(f"DEBUG: Full request data: {data}")
-    # To:
+
     logger.info(f"Recommendation request for user_id: {user_id}")
     logger.debug(f"Full request data: {data}")
-    
+
     if not user_id:
-        print("DEBUG: No user_id provided")
         return jsonify({"recommendations": []})
 
     try:
-        # Connect to your MySQL DB
+        # Connect to MySQL
         conn = mysql.connector.connect(
             host='localhost',
             user='root',
@@ -238,91 +233,76 @@ def recommend_by_field():
             database='library_test_db'
         )
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT education_level, major, strand FROM users WHERE id = %s", (user_id,))
+        cursor.execute(
+            "SELECT education_level, major, strand FROM users WHERE id = %s",
+            (user_id,)
+        )
         user = cursor.fetchone()
         cursor.close()
         conn.close()
 
         if not user:
-            print(f"DEBUG: User {user_id} not found in database")
             return jsonify({"recommendations": []})
 
-        # Change from:
-        # print(f"DEBUG: User data from DB: {user}")
-        # print(f"DEBUG: Education level: {edu_level}")
-        # print(f"DEBUG: Field (major/strand): {field}")
-        # print(f"DEBUG: Mapped categories: {categories}")
-        # To:
-        edu_level = user['education_level'].lower()
-        field = user['major'] if edu_level == "college" else user['strand']
-        categories = MAJOR_CATEGORY_MAP.get(field, []) if edu_level == "college" else STRAND_CATEGORY_MAP.get(field, [])
-        logger.info(f"User: {edu_level} - {field} -> categories: {categories}")
+        # Normalize fields
+        edu_level = (user.get('education_level') or '').strip().lower()
+        if edu_level == "college":
+            field = (user.get('major') or '').strip()
+            categories = MAJOR_CATEGORY_MAP.get(field, [])
+        elif edu_level == "shs":
+            field = (user.get('strand') or '').strip().upper()
+            categories = STRAND_CATEGORY_MAP.get(field, [])
+        else:
+            field = ""
+            categories = []
 
+        # Fallback to all categories if mapping empty
         if not categories:
-            print(f"DEBUG: No categories found for field: {field}")
-            return jsonify({"recommendations": []})
+            categories = df['General_Category'].dropna().unique().tolist()
 
-        # FIX 3: Make sure df is accessible (it should be from global scope)
-        if 'df' not in globals():
-            print("ERROR: DataFrame 'df' not found in global scope")
-            return jsonify({"recommendations": []})
+        logger.info(f"User: {edu_level} - {field} -> mapped categories: {categories}")
 
-        print(f"DEBUG: DataFrame shape: {df.shape}")
-        print(f"DEBUG: DataFrame columns: {df.columns.tolist()}")
+        df['General_Category'] = df['General_Category'].str.strip()
 
-        # FIX 4: Debug the filtering process
-        print(f"DEBUG: Looking for books with categories containing: {categories}")
-        category_pattern = '|'.join(categories)
-        print(f"DEBUG: Category pattern: {category_pattern}")
-        
-        # Check what categories exist in the dataframe
-        unique_categories = df['General_Category'].unique()
-        print(f"DEBUG: Unique categories in DataFrame: {unique_categories}")
-        
-        # Filter the DataFrame based on the categories
-        filtered_books = df[df['General_Category'].astype(str).str.contains(category_pattern, na=False)]
-        print(f"DEBUG: Filtered books count: {len(filtered_books)}")
-        
-        if len(filtered_books) == 0:
-            print("DEBUG: No books found after filtering")
-            # Let's check if there are exact matches
-            exact_matches = df[df['General_Category'].isin(categories)]
-            print(f"DEBUG: Exact category matches: {len(exact_matches)}")
-            if len(exact_matches) > 0:
-                filtered_books = exact_matches
+        ## Filter books
+        filtered_books = df[df['General_Category'].isin(categories)].copy()
 
-        recommendedBooks = filtered_books[['TITLE', 'AUTHOR', 'General_Category', 'Like']] \
-            .sort_values(by='Like', ascending=False) \
-            .head(5) \
-            .to_dict(orient='records')
+        if filtered_books.empty:
+            filtered_books = df.copy()
 
-        print(f"DEBUG: Recommended books before cleaning: {recommendedBooks}")
+        # Ensure Like column exists
+        if 'Like' not in filtered_books.columns:
+            filtered_books['Like'] = 0
+        filtered_books['Like'] = filtered_books['Like'].fillna(0)
 
-        # Process recommendedBooks to replace NaN with None for JSON compatibility
+        # Handle missing cover_image_url
+        if 'cover_image_url' not in filtered_books.columns:
+            filtered_books['cover_image_url'] = ""
+
+        # Columns to include
+        cols = ['TITLE', 'AUTHOR', 'General_Category', 'cover_image_url']
+
+        # Take top 5 by likes
+        recommendedBooks = filtered_books.nlargest(5, 'Like')[cols]
+
+        # DEBUG: log recommended book titles
+        logger.info("Recommended books for user_id %s: %s",
+                    user_id,
+                    recommendedBooks['TITLE'].tolist())
+
+        # Clean NaNs / missing values
         cleaned_recommended_books = []
-        for book in recommendedBooks:
-            cleaned_book = {}
-            for key, value in book.items():
-                # Check specifically for float NaNs from pandas/numpy
-                if isinstance(value, float) and math.isnan(value):
-                    cleaned_book[key] = None # Python's None becomes JSON's null
-                else:
-                    cleaned_book[key] = value
+        for book in recommendedBooks.to_dict(orient='records'):
+            cleaned_book = {k: ("" if v is None or (isinstance(v, float) and math.isnan(v)) else v)
+                            for k, v in book.items()}
             cleaned_recommended_books.append(cleaned_book)
 
-        # Change from:
-        # print(f"DEBUG: Final recommendations (cleaned): {cleaned_recommended_books}")
-        # To:
-        logger.info(f"Returning {len(cleaned_recommended_books)} recommendations for user {user_id}")
-        logger.debug(f"Recommendations: {cleaned_recommended_books}")
         return jsonify({"recommendations": cleaned_recommended_books})
 
     except Exception as e:
-        # Keep error logging:
-        logger.error(f"Error in recommend_by_field: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error in recommend_by_field: {e}", exc_info=True)
         return jsonify({"recommendations": []})
+
 
 # ── 4.  Root → redirect to PHP UI ───────────────────────────────
 @app.route("/")

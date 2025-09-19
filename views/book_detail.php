@@ -158,9 +158,6 @@ if ($userId) {
     <!-- LEFT SIDE: Book + Comments in one bordered section -->
     <div class="md:col-span-2">
       <section class="border rounded-lg p-6 bg-white shadow-sm">
-        <?php if (!$book): ?>
-          <p class="text-red-600 font-semibold">Book not found.</p>
-        <?php else: ?>
           <!-- 📖 Book Title & Info with Cover -->
           <div class="flex gap-6 items-start mb-6">
             
@@ -327,7 +324,6 @@ if (!$disableReserve && $currentReservation) {
               </div>
             <?php endforeach; ?>
           </section>
-        <?php endif; ?>
       </section>
     </div>
 
