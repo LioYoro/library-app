@@ -131,15 +131,17 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 venv\Scripts\activate
 cd recommender_service
 python app.py
+```
 
 ----------------------------------------------------
 ## ✅ Standard Workflow
 ----------------------------------------------------
 
 ### 1. Make sure you’re on the latest version (always pull first)
+
+```git pull origin main
 ```
-git pull origin main
-```
+
 ### 2. Stage your changes (after coding/editing files)
 ```
 git add .
