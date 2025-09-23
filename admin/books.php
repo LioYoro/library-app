@@ -84,37 +84,53 @@ while ($row = mysqli_fetch_assoc($res)) {
     </div>
   </div>
 
-  <!-- Recently Added Books -->
+    <!-- Recently Added Books -->
   <div class="bg-white p-6 rounded-xl shadow">
     <h2 class="text-lg font-semibold text-gray-800 mb-4">🆕 Recently Added Books</h2>
-    <table class="w-full text-sm border border-gray-200 rounded">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-3 py-2 border">Title</th>
-          <th class="px-3 py-2 border">Category</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($recentBooks)): ?>
-          <tr><td colspan="2" class="px-3 py-2 text-center italic">No books added yet.</td></tr>
-        <?php else: ?>
-          <?php foreach ($recentBooks as $book): ?>
-            <tr class="hover:bg-gray-50">
-              <td class="px-3 py-2 border"><?= htmlspecialchars($book['TITLE']) ?></td>
-              <td class="px-3 py-2 border"><?= htmlspecialchars($book['General_Category']) ?></td>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Table -->
+      <div>
+        <table class="w-full text-sm border border-gray-200 rounded">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-3 py-2 border">Title</th>
+              <th class="px-3 py-2 border">Category</th>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-    <div class="mt-4">
+          </thead>
+          <tbody>
+            <?php if (empty($recentBooks)): ?>
+              <tr><td colspan="2" class="px-3 py-2 text-center italic">No books added yet.</td></tr>
+            <?php else: ?>
+              <?php foreach ($recentBooks as $book): ?>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-3 py-2 border"><?= htmlspecialchars($book['TITLE']) ?></td>
+                  <td class="px-3 py-2 border"><?= htmlspecialchars($book['General_Category']) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+        <div class="mt-4">
           <a href="books_tools/manage_books.php" 
              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow text-sm">
              MANAGE OR ADD MORE BOOKS
           </a>
         </div>
+      </div>
+
+      <!-- Highlight Box -->
+      <div class="flex items-center justify-center">
+        <div class="bg-blue-50 border border-blue-200 text-center p-6 rounded-lg shadow-md w-full">
+          <p class="text-lg font-medium text-gray-700">📅 Books Added This Month</p>
+          <p class="text-4xl font-bold text-blue-600 mt-2"><?= $booksThisMonth ?></p>
+          <p class="text-sm text-gray-500 mt-1">new books recorded</p>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

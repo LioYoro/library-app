@@ -19,18 +19,20 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $stmt->execute([$action, $id]);
 
         // 2️⃣ Insert or update in event_report including file_path and file_type
-        $stmt = $pdo->prepare("
+       $stmt = $pdo->prepare("
             INSERT INTO event_report
-            (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date)
-            SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW()
+            (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date, date_submitted)
+            SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW(), date_submitted
             FROM propose_event
             WHERE id=?
             ON DUPLICATE KEY UPDATE 
                 status=VALUES(status), 
                 decision_date=VALUES(decision_date),
                 file_path=VALUES(file_path),
-                file_type=VALUES(file_type)
+                file_type=VALUES(file_type),
+                date_submitted=VALUES(date_submitted)
         ");
+
         $stmt->execute([$action, $id]);
 
         // 3️⃣ Send email if requested
@@ -81,8 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action']) && !em
             $stmt = $pdo->prepare("UPDATE propose_event SET status=? WHERE id=?");
             $stmt->execute([$action, $id]);
 
-            // Insert or update event_report including file_path and file_type
-            $stmt = $pdo->prepare("INSERT INTO event_report (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date) SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW() FROM propose_event WHERE id=? ON DUPLICATE KEY UPDATE status=VALUES(status), decision_date=VALUES(decision_date), file_path=VALUES(file_path), file_type=VALUES(file_type)");
+            // Insert or update event_report including date_submitted, file_path and file_type
+            $stmt = $pdo->prepare("
+                INSERT INTO event_report
+                (proposal_id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, status, decision_date, date_submitted)
+                SELECT id, name, event_title, description, contact, user_email, event_date, event_time, file_path, file_type, ?, NOW(), date_submitted
+                FROM propose_event
+                WHERE id=?
+                ON DUPLICATE KEY UPDATE 
+                    status=VALUES(status), 
+                    decision_date=VALUES(decision_date),
+                    file_path=VALUES(file_path),
+                    file_type=VALUES(file_type),
+                    date_submitted=VALUES(date_submitted)
+            ");
             $stmt->execute([$action, $id]);
         }
     }
@@ -90,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action']) && !em
     header("Location: event_proposals.php");
     exit;
 }
+
 
 // =================== FETCH DATA ===================
 $pending = $pdo->query("SELECT * FROM propose_event WHERE status='PENDING' ORDER BY date_submitted DESC")->fetchAll();
@@ -108,6 +123,28 @@ $rejected = $pdo->query("SELECT * FROM propose_event WHERE status='REJECTED' ORD
 <style>
 body { font-family: Arial, sans-serif; background: #f8fafc; margin: 20px; }
 h1 { text-align: center; color: #1d4ed8; margin-bottom: 30px; }
+
+/* Header section styling */
+.header-section { 
+    text-align: center; 
+    margin-bottom: 30px; 
+}
+
+.create-report-btn {
+    background: #1d4ed8;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.create-report-btn:hover {
+    background: #1e40af;
+}
+
 .container { display: flex; gap: 20px; }
 .box { flex: 1; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-height: 80vh; overflow-y: auto; }
 h2 { text-align: center; font-size: 18px; margin-bottom: 15px; }
@@ -122,15 +159,125 @@ th { background: #f1f5f9; }
 .popup-content { background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:5% auto; position:relative; }
 .close { position:absolute; top:10px; right:15px; cursor:pointer; font-weight:bold; }
 .bulk-actions { margin-bottom: 10px; text-align: right; }
-.email-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+.email-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 1000; }
 .email-modal { background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:5% auto; position:relative; }
 .email-modal-header { text-align:center; margin-bottom:15px; }
 .email-modal-body { margin-bottom:20px; }
 .email-modal-actions { display:flex; justify-content:center; gap:10px; }
-.email-modal-btn { padding:10px 20px; border-radius:4px; font-size:14px; color:#fff; text-decoration:none; cursor:pointer; }
+.email-modal-btn { padding:10px 20px; border-radius:4px; font-size:14px; color:#fff; text-decoration:none; cursor:pointer; border: none; }
 .email-modal-btn-primary { background:green; }
 .email-modal-btn-danger { background:red; }
 .email-modal-btn-secondary { background:#ccc; }
+
+/* Report Modal Styling - Fixed to be a proper popup */
+.report-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.report-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.report-modal h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.report-modal .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-modal .close-btn:hover {
+    color: #333;
+}
+
+.report-modal .form-group {
+    margin-bottom: 15px;
+}
+
+.report-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.report-modal select,
+.report-modal input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.report-modal .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.report-modal .btn-primary {
+    background: #1d4ed8;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.report-modal .btn-primary:hover {
+    background: #1e40af;
+}
+
+.report-modal .btn-secondary {
+    background: #6b7280;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.report-modal .btn-secondary:hover {
+    background: #4b5563;
+}
+
+.hidden { display: none !important; }
 </style>
 <script>
 function confirmActionWithEmail(action, id, email, name, title, desc, date, time) {
@@ -178,14 +325,6 @@ function hideEmailConfirmModal() {
     document.getElementById('emailConfirmModal').style.display = 'none';
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('emailConfirmModal');
-    if (event.target === modal) {
-        hideEmailConfirmModal();
-    }
-}
-
 function showPopup(title, desc, contact, email, date, time, filePath) {
     document.getElementById('popup').style.display = 'block';
     document.getElementById('pTitle').innerText = title;
@@ -207,11 +346,61 @@ function toggleSelectAll(source, formId) {
         checkboxes[i].checked = source.checked;
     }
 }
+
+// Fixed Report Modal Functions
+function openReportModal() {
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'block';
+    toggleMonthYear();
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'none';
+}
+
+function toggleMonthYear() {
+    const type = document.getElementById('report-type').value;
+    const monthSelect = document.getElementById('month-select');
+    const yearSelect = document.getElementById('year-select');
+    
+    if (type === 'monthly') {
+        monthSelect.style.display = 'block';
+        yearSelect.style.display = 'none';
+    } else {
+        monthSelect.style.display = 'none';
+        yearSelect.style.display = 'block';
+    }
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const emailModal = document.getElementById('emailConfirmModal');
+    const reportModal = document.getElementById('reportModal');
+    const popup = document.getElementById('popup');
+    
+    if (event.target === emailModal) {
+        hideEmailConfirmModal();
+    }
+    if (event.target === reportModal) {
+        closeReportModal();
+    }
+    if (event.target === popup) {
+        closePopup();
+    }
+}
 </script>
 </head>
 <body>
 
 <h1>📑 Event Proposals</h1>
+
+<!-- Create Report Button - Fixed positioning -->
+<div class="header-section">
+    <button onclick="openReportModal()" class="create-report-btn">
+        📊 Create Report
+    </button>
+</div>
 
 <div class="container">
     <!-- Pending -->
@@ -335,6 +524,53 @@ function toggleSelectAll(source, formId) {
             <?php endforeach; ?>
         </table>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Report Modal - Fixed as proper popup -->
+<div id="reportModal" class="report-modal-overlay">
+    <div class="report-modal">
+        <button type="button" onclick="closeReportModal()" class="close-btn">✕</button>
+        
+        <h2>📊 Generate Event Report</h2>
+
+        <form action="generate_event_report.php" method="GET" target="_blank">
+            <div class="form-group">
+                <label for="report-type">Report Type:</label>
+                <select name="type" id="report-type" onchange="toggleMonthYear()">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+
+            <div id="month-select" class="form-group">
+                <label for="month">Choose Month:</label>
+                <input type="month" name="month" id="month">
+            </div>
+
+            <div id="year-select" class="form-group" style="display: none;">
+                <label for="year">Choose Year:</label>
+                <input type="number" name="year" id="year" value="<?php echo date('Y'); ?>" 
+                       min="2000" max="<?php echo date('Y'); ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="format">Format:</label>
+                <select name="format" id="format">
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    Generate Report
+                </button>
+                <button type="button" onclick="closeReportModal()" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
